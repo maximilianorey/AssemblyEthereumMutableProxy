@@ -1,4 +1,3 @@
-import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 import "hardhat-deploy";
 import "hardhat-gas-reporter";
@@ -27,7 +26,6 @@ const config: HardhatUserConfig = {
       chainId: 31337,
     },
   },
-  defaultNetwork: "hardhat",
   paths: {
     artifacts: "./artifacts",
     cache: "./cache",
@@ -35,19 +33,14 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.7",
+    version: "0.8.18",
     settings: {
       optimizer: {
         enabled: true,
         runs: 200,
       },
     },
-  },
-  typechain: {
-    outDir: "typechain",
-    target: "ethers-v5",
-    alwaysGenerateOverloads: false,
-  },
+  }
 };
 
 export default config;

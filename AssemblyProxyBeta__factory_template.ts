@@ -2,13 +2,21 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Signer, utils, Contract, ContractFactory, Overrides } from "ethers";
-import { Provider, TransactionRequest } from "@ethersproject/providers";
+
+import {
+  Contract,
+  ContractFactory,
+  ContractTransactionResponse,
+  Interface,
+} from "ethers";
+import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
+import type { NonPayableOverrides } from "../typechain/common";
 import type {
   AssemblyProxyBeta,
   AssemblyProxyBetaInterface,
 } from "./AssemblyProxyBeta";
-import { EthereumException } from '../Exception/EthereumException';
+
+import { EthereumException } from '../Exception/EthereumException'
 
 const _abi = [
   {
@@ -48,13 +56,56 @@ const _abi = [
     stateMutability: "nonpayable",
     type: "function",
   },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "implementation",
+        type: "address",
+      },
+    ],
+    name: "Upgraded",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "previousAdmin",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "newAdmin",
+        type: "address",
+      },
+    ],
+    name: "AdminChanged",
+    type: "event",
+  }
 ];
 
 const _bytecode =
   "<$BYTECODE>"
+  
+type AssemblyProxyBetaConstructorParams =
+  | [signer?: Signer]
+  | ConstructorParameters<typeof ContractFactory>;
+
+const isSuperArgs = (
+  xs: AssemblyProxyBetaConstructorParams
+): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
 
 export class AssemblyProxyBeta__factory extends ContractFactory {
-  constructor(admin: string, implementation: string, signer?: Signer) {
+  constructor(admin: string, implementation: string, ...args: AssemblyProxyBetaConstructorParams) {
+    if (isSuperArgs(args)) {
+      super(...args);
+    } else {
     let cAdmin = admin.startsWith("0x") ? admin.substring(2) : admin;
     let cImplementation = implementation.startsWith("0x") ? implementation.substring(2) : implementation;
 
@@ -87,38 +138,41 @@ export class AssemblyProxyBeta__factory extends ContractFactory {
     const implementationCode = Buffer.from(cImplementation);
     adminCode.copy(buffCode,"<$INITIAL_ADMIN_DIR>"*2+2);
     implementationCode.copy(buffCode,"<$INITIAL_IMPLEMENTATION_DIR>"*2+2);
-    super(_abi, buffCode.toString(), signer);
+    super(_abi, buffCode.toString(), args[0]);
+    }
   }
 
-  deploy(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<AssemblyProxyBeta> {
-    return super.deploy(overrides || {}) as Promise<AssemblyProxyBeta>;
-  }
-  getDeployTransaction(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): TransactionRequest {
+  override getDeployTransaction(
+    overrides?: NonPayableOverrides & { from?: string }
+  ): Promise<ContractDeployTransaction> {
     return super.getDeployTransaction(overrides || {});
   }
-  attach(address: string): AssemblyProxyBeta {
-    return super.attach(address) as AssemblyProxyBeta;
+  override deploy(overrides?: NonPayableOverrides & { from?: string }) {
+    return super.deploy(overrides || {}) as Promise<
+      AssemblyProxyBeta & {
+        deploymentTransaction(): ContractTransactionResponse;
+      }
+    >;
   }
-  connect(signer: Signer): AssemblyProxyBeta__factory {
-    return super.connect(signer) as AssemblyProxyBeta__factory;
+  override connect(
+    runner: ContractRunner | null
+  ): AssemblyProxyBeta__factory {
+    return super.connect(runner) as AssemblyProxyBeta__factory;
   }
+
   static readonly bytecode = _bytecode;
   static readonly abi = _abi;
   static createInterface(): AssemblyProxyBetaInterface {
-    return new utils.Interface(_abi) as AssemblyProxyBetaInterface;
+    return new Interface(_abi) as AssemblyProxyBetaInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): AssemblyProxyBeta {
     return new Contract(
       address,
       _abi,
-      signerOrProvider
-    ) as AssemblyProxyBeta;
+      runner
+    ) as unknown as AssemblyProxyBeta;
   }
 }

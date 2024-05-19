@@ -1,5 +1,3 @@
-import "@openzeppelin/hardhat-upgrades";
-
 import chai, { expect } from "chai";
 import { solidity } from "ethereum-waffle";
 import { Contract } from "ethers";
@@ -67,14 +65,8 @@ describe("MutableProxyBeta", function () {
       )
     ).wait();
 
-    expect(txSI.events?.length).to.be.equal(1);
-
-    if(!txSI.events?.length){ // THIS WILL ALWAYS BE FALSE. IT'S FOR ESLINT RULES.
-      return;
-    }
-
-    expect(txSI.events[0].event).to.be.equal("Upgraded");
-    expect(txSI.events[0].args?.at(0)).to.be.equal(erc20_2_instance.address);
+    expect(txSI.events![0].event!).to.be.equal("Upgraded");
+    expect(txSI.events![0].args![0]).to.be.equal(erc20_2_instance.address);
 
     expect(await proxy.adminFunctionsGet("0")).to.be.equals(erc20_2_instance.address);
 
@@ -130,16 +122,10 @@ describe("MutableProxyBeta", function () {
       )
     ).wait();
 
-    expect(txCO.events?.length).to.be.equal(1);
-
-    if(!txCO.events?.length){ // THIS WILL ALWAYS BE FALSE. IT'S FOR ESLINT RULES.
-      return;
-    }
-
-    expect(txCO.events[0].event).to.be.equal("AdminChanged");
+    expect(txCO.events![0].event!).to.be.equal("AdminChanged");
     
-    expect(txCO.events[0].args?.at(0)).to.be.equal(wallet.address);
-    expect(txCO.events[0].args?.at(1)).to.be.equal(
+    expect(txCO.events![0].args![0]).to.be.equal(wallet.address);
+    expect(txCO.events![0].args![1]).to.be.equal(
       "0x0000000000000000000000000000000000000001"
     );
 

@@ -1,4 +1,4 @@
-import bip39 from 'bip39';
+import { generateMnemonic } from "bip39";
 
-const mnemonic = bip39.generateMnemonic();
+const mnemonic = generateMnemonic();
 console.log(mnemonic);
