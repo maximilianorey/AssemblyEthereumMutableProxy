@@ -150,7 +150,7 @@ const _abi = [
 ];
 
 let _bytecode =
-  "<$BYTECODE>"
+  "<BINARYCODE>"
 
 
 type AssemblyProxyConstructorParams =
@@ -196,8 +196,8 @@ export class AssemblyProxy__factory extends ContractFactory {
       const buffCode = Buffer.from(_bytecode);
       const adminCode = Buffer.from(cAdmin);
       const implementationCode = Buffer.from(cImplementation);
-      adminCode.copy(buffCode,"<$INITIAL_ADMIN_DIR>"*2+2);
-      implementationCode.copy(buffCode,"<$INITIAL_IMPLEMENTATION_DIR>"*2+2);
+      adminCode.copy(buffCode,<P>ADMIN<P>*2+2);
+      implementationCode.copy(buffCode,<P>IMPL<P>*2+2);
       super(_abi, buffCode.toString(), args[0]);
     }
   }
