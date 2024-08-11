@@ -9,7 +9,6 @@ import {
 } from "ethers";
 import type {
   Signer,
-  AddressLike,
   ContractDeployTransaction,
   ContractRunner,
 } from "ethers";
