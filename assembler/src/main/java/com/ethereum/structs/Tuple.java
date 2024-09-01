@@ -5,9 +5,10 @@ import com.ethereum.utils.Utils;
 
 import java.util.Map;
 
-public class Tuple<T,V> implements Map.Entry<T,V>{
+public class Tuple<T,V> implements Map.Entry<T,V> {
     private final T key;
     private final V value;
+
     @Override
     public T getKey() {
         return this.key;

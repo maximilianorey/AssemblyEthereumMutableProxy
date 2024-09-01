@@ -15,7 +15,7 @@ public class Utils {
         if(str.length()<size*2){
             return StringUtils.leftPad(str,size*2,"0");
         }
-        System.out.println(str);
+        System.err.println("String too short: '" + str + "' for size: " + size);
         return null;
     }
 }

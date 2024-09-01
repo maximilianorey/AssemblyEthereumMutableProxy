@@ -19,14 +19,13 @@ public class Outputs {
             String[] splited = line.split("<P>");
             if(splited.length == 1){
                 writer.write(line.replace("<BINARYCODE>","0x" + codeStr));
-                writer.write("\n");
             }else{
                 for(int i = 1;i<splited.length; i+=2){
                     splited[i] = parser.getParameter(splited[i]).toString();
                 }
                 writer.write(String.join("", splited).replace("<BINARYCODE>","0x" + codeStr));
-                writer.write("\n");
             }
+            writer.write("\n");
         }
         assemblyInput.close();
         input.close();
@@ -47,18 +46,17 @@ public class Outputs {
         String code = parser.generateCode(assemblyInput);
         System.out.println("bytes memory dat = new bytes("+ parser.getTotalLength() +");");
         System.out.println("assembly{");
-        for(int i = 0; i<code.length();i+=32){
-            String substr;
-            if(i+32 < code.length()){
-                substr = code.substring(i,i+32);
-            }else{
-                substr = StringUtils.rightPad(code.substring(i),32,"0");
-            }
-            System.out.println("\tmstore(add(dat,"+ i + "), 0x" + String.join("",substr) + ")");
+        int lastIndex = code.length()-64;
+        for(int i = 0; i<lastIndex;i+=64){
+            System.out.println("\tmstore(add(dat,"+ i/2 + "), 0x" + String.join("",code.substring(i,i+64)) + ")");
         }
+        String substring = StringUtils.rightPad(code.substring(lastIndex),64,"0");
+        System.out.println("\tmstore(add(dat,"+ lastIndex/2 + "), 0x" + String.join("",substring) + ")");
+
         for(String parameterKey: parser.getParametersKeys()){
             System.out.println("\tmstore(add(dat," + parser.getParameter(parameterKey) + ")," + parameterKey + ")");
         }
+        System.out.println("\tmstore(proxyAddr,create(0,dat," + parser.getTotalLength() + "))");
         System.out.println("}");
         assemblyInput.close();
     }

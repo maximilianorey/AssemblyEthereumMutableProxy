@@ -58,7 +58,6 @@ public class Parser {
                 long _lineNumber = lineNumber;
                 getLabel(line, "<D>").ifPresent(label -> {
                     String code = _line.substring(2, 4);
-                    //TODO DestinationType error
                     set.addDestination(label, new Destination(_index, code.equals("5B") ? DestinationType.DESTJUMP : DestinationType.OTHER)).ifPresent(error -> {
                         throw new ParserException(_lineNumber, "code with source label is not a push: " + code);
                     });
