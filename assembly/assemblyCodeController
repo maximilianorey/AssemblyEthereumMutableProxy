@@ -1,0 +1,133 @@
+END CONSTRUCTOR
+0x34 //CALLVALUE
+0x60 // <S>NO PAYMENT ALLOWED<S>
+0x57 // JUMPI
+0x36 // CALLDATASIZE
+0x60 // PUSH1 <S>NO CALLBACK<S>
+0x57 // JUMPI
+0x33 // SENDER
+0x54 // SLOAD
+0x60 // PUSH1
+0x00 // 0
+0x52 // MSTORE
+0x60 // PUSH1 (RET LENGTH)
+0x20 // 32
+0x60 // PUSH1 (RET OFFSET)
+0x00 // 0
+0xF3 // RETURN
+0x5B // JUMPDST <D>NO CALLBACK<D>
+
+0x60 // PUSH1
+0x00 // 0
+0x35 // CALLDATALOAD
+
+0x60 // PUSH1
+0xE0 // 224
+0x1C // SHR
+
+0x80 // DUP1 (CALLDATALOAD function hash)
+0x63 // PUSH4
+0x64 // getAdmin(address) hash
+0xef
+0xb2
+0x2b
+0x14 // EQ
+0x60 // <S>getAdmin function<S>
+0x57 // JUMPI
+
+0x80 // DUP1 (CALLDATALOAD function hash)
+0x63 // PUSH4
+0x1a // changeAdmin(address,address) hash
+0xcf
+0xd0
+0x2a
+0x14 // EQ
+0x60 // <S>changeAdmin function<S>
+0x57 // JUMPI
+
+0x63 // PUSH4
+0x0a // deployProxy(address,address) hash
+0x6e
+0xaf
+0xdd
+0x14 // EQ
+0x60 // <S>deployProxy function<S>
+0x57 // JUMPI
+
+TODO ERROR NOT FUNCTION FOUND
+
+0x5B // JUMPDEST <D>getAdmin function<D>
+0x60 // PUSH1
+0x04 // 4
+0x35 // CALLDATALOAD
+0x54 // SLOAD (admin's address)
+0x60 // PUSH1 (ret length)
+0x20 // 32
+0x60 // PUSH1 (ret offset)
+0x00 // 0
+0xF3 // RETURN
+
+0x5B // JUMPDEST <D>changeAdmin function<D>
+0x60 // PUSH 1
+0x20 // 32
+0x35 // CALLDATALOAD (newAddress parameter)
+0x60 // PUSH 1
+0x00 // 0
+0x35 // CALLDATALOAD (contractAddress parameter)
+0x80 // DUP1 (contractAddress parameter)
+0x54 // SLOAD (admin's address)
+0x33 // SENDER
+0x03 // SUB
+0x60 // <S>changeAdmin - throw error<S>
+0x57 // JUMPI
+0x55 // SSTORE
+0x00 // STOP
+0x5B // JUMPDST <D>changeAdmin - throw error<D>
+0x60 // PUSH1 <S>changeAdmin - throw Caller is not the actual admin.<S> If previews admin is not zero
+0x57 // JUMPI
+0x60
+0x-- // 'Proxy not registered or hasn't admin.' length
+0x80 // DUP1 ('Proxy not registered or hasn't admin.' length)
+0x60 // PUSH1 <S>'Proxy not registered or hasn't admin.' error<S>
+0x60 // PUSH1
+0x00 // 0
+0x39 // CODECOPY
+0x60 // PUSH1
+0x00 // 0
+0xFD // REVERT
+0x5B // JMPDST <D>changeAdmin - throw Caller is not the actual admin.<D>
+0x60
+0x-- // 'Caller is not the actual admin.' length
+0x80 // DUP1 ('Caller is not the actual admin.' length)
+0x60 // PUSH1 <S>'PCaller is not the actual admin.' error<S>
+0x60 // PUSH1
+0x00 // 0
+0x39 // CODECOPY
+0x60 // PUSH1
+0x00 // 0
+0xFD // REVERT
+
+0x5B // JUMPDST <D>deployProxy function<D>
+0x60 // PUSH1
+0x00 // 0
+0x35 // CALLDATALOAD (admin parameter)
+0x60 // PUSH1
+0x20 // 32
+0x35 // CALLDATALOAD (implementation parameter)
+0x80 // DUP1 (implementation parameter)
+0x3B // EXTCODESIZE
+0x60 // <S>implementation is an address<S>
+0x57 // JUMPI
+
+0x60
+0x-- // 'implementation is not an address.' length
+0x80 // DUP1 ('implementation is not an address.' length)
+0x60 // PUSH1 <S>'implementation is not an address.' error<S>
+0x60 // PUSH1
+0x00 // 0
+0x39 // CODECOPY
+0x60 // PUSH1
+0x00 // 0
+0xFD // REVERT
+
+0x5B // DSTJMP <D>implementation is an address<D>

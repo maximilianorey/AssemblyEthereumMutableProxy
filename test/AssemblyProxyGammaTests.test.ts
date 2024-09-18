@@ -5,20 +5,24 @@ import { expect } from "chai";
 import { Contract, Signer } from "ethers";
 import { ethers }  from "hardhat";
 
-import { AssemblyProxyBeta__factory } from "../src/AssemblyProxyBeta/AssemblyProxyBeta__factory";
+import { AssemblyProxyGamma__factory } from "../src/AssemblyProxyGamma/AssemblyProxyGamma__factory";
+import { Typed } from "ethers";
 
-describe("MutableProxyBeta", function () {
+describe("MutableProxyGamma", function () {
 	it("Should deploy a proxy with controller and call to transparent functions of proxy, and later change implementation", async function () {
 		const [ wallet ]: Signer[] = await ethers.getSigners();
 		const erc20Factory = await ethers.getContractFactory("ERC20Imp");
 		const erc20_1 = await (await erc20Factory.deploy()).waitForDeployment();
 
-		const proxyFactory = new AssemblyProxyBeta__factory(await wallet.getAddress(),await erc20_1.getAddress(),wallet);
+		const adminStorage = await (await (await ethers.getContractFactory("AdminsStorage")).deploy()).waitForDeployment();
+
+		const proxyFactory = new AssemblyProxyGamma__factory(await wallet.getAddress(),await erc20_1.getAddress(), await adminStorage.getAddress(),wallet);
 
 		const proxy = await (await proxyFactory.deploy()).waitForDeployment();
 
 		expect(await proxy.adminFunctionsGet("0")).to.be.equals(await erc20_1.getAddress());
-		expect(await proxy.adminFunctionsGet("1")).to.be.equals(await wallet.getAddress());
+		expect(await proxy.adminFunctionsGet("1")).to.be.equals(await adminStorage.getAddress());
+		expect(await adminStorage.getAdmin(Typed.address(await proxy.getAddress()))).to.be.equal(await wallet.getAddress());
 
 		const proxyERC20 = erc20Factory.attach(await proxy.getAddress());
 
@@ -51,16 +55,63 @@ describe("MutableProxyBeta", function () {
 			await ethers.getContractFactory("ERC20Imp_2")
 		).deploy()).waitForDeployment();
 
+		const payableContract = new Contract(
+			await proxy.getAddress(),
+			[
+				{
+					inputs: [
+					  {
+							internalType: "enum AssemblyProxyGamma.AdminFuctionGetType",
+							name: "func",
+							type: "uint8",
+					  },
+					],
+					name: "adminFunctionsGet",
+					outputs: [
+					  {
+							internalType: "address",
+							name: "",
+							type: "address",
+					  },
+					],
+					stateMutability: "payable",
+					type: "function",
+				},
+				{
+					inputs: [
+					  {
+							internalType: "address",
+							name: "newImplementation",
+							type: "address",
+					  },
+					],
+					name: "upgradeTo",
+					outputs: [],
+					stateMutability: "payable",
+					type: "function",
+				  }
+			],
+			wallet
+		);
+
 		await expect(
-			proxy.adminFunctionsPut(
-				"0",
+			payableContract.upgradeTo(
+				await erc20_1.getAddress(),
+				{ value: "20" }
+			)
+		).to.be.revertedWith("NOT PAYMENT ALLOWED");
+
+		await expect(payableContract.adminFunctionsGet("0", { value: "20" })).to.be.revertedWith("NOT PAYMENT ALLOWED");
+		await expect(payableContract.adminFunctionsGet("1", { value: "20" })).to.be.revertedWith("NOT PAYMENT ALLOWED");
+
+		await expect(
+			proxy.upgradeTo(
 				"0x0000000000000000000000000000000000000001"
 			)
 		).to.be.revertedWith("ERC1967: new implementation is not a contract");
 
 		const txSI = await (
-			await proxy.adminFunctionsPut(
-				"0",
+			await proxy.upgradeTo(
 				await erc20_2_instance.getAddress()
 			)
 		).wait();
@@ -81,57 +132,33 @@ describe("MutableProxyBeta", function () {
 			).toString()
 		).to.be.equal("500000000000000000");
 
-		const payableContract = new Contract(
-			await proxy.getAddress(),
-			[
-				{
-					inputs: [
-						{
-							internalType: "enum AssemblyProxyBetaDummy.AdminFuctionPutType",
-							name: "func",
-							type: "uint8",
-						},
-						{
-							internalType: "address",
-							name: "parameter",
-							type: "address",
-						},
-					],
-					name: "adminFunctionsPut",
-					outputs: [],
-					stateMutability: "payable",
-					type: "function",
-				}
-			],
-			wallet
-		);
-
 		await expect(
-			payableContract.adminFunctionsPut(
-				"0",
-				await erc20_1.getAddress(),
-				{ value: "20" }
+			adminStorage.changeAdmin(
+				"0x0000000000000000000000000000000000000001",
+				"0x0000000000000000000000000000000000000001"
 			)
-		).to.be.revertedWith("NOT PAYMENT ALLOWED");
-
+		).to.be.revertedWith("Proxy not registered.");
+		
 		const txCO = await (
-			await proxy.adminFunctionsPut(
-				"1",
+			await adminStorage.changeAdmin(
+				await proxy.getAddress(),
 				"0x0000000000000000000000000000000000000001"
 			)
 		).wait();
 
-		await expect(txCO).to.emit(proxy,"AdminChanged").withArgs(await wallet.getAddress(),BigInt(1));
+		expect(await adminStorage.getAdmin(Typed.address(await proxy.getAddress()))).to.be.equal("0x0000000000000000000000000000000000000001");
+
+		await expect(txCO).to.emit(adminStorage,"AdminChanged").withArgs(await proxy.getAddress(), await wallet.getAddress(),BigInt(1));
 
 		await expect(
-			proxy.adminFunctionsPut(
-				"1",
-				"0x0000000000000000000000000000000000000001"
+			adminStorage.changeAdmin(
+				await proxy.getAddress(),
+				"0x0000000000000000000000000000000000000002"
 			)
-		).to.be.reverted;
+		).to.be.revertedWith("Caller is not the actual admin.");
 
 		await expect(
-			proxy.adminFunctionsPut("0",await erc20_1.getAddress())
+			proxy.upgradeTo(await erc20_1.getAddress())
 		).to.be.reverted;
 	});
 });
