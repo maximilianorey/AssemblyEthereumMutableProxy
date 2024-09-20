@@ -22,7 +22,7 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "enum AssemblyProxyBetaDummy.AdminFuctionGetType",
+        internalType: "enum AssemblyProxyBeta.AdminFuctionGetType",
         name: "func",
         type: "uint8",
       },
@@ -41,7 +41,7 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "enum AssemblyProxyBetaDummy.AdminFuctionPutType",
+        internalType: "enum AssemblyProxyBeta.AdminFuctionPutType",
         name: "func",
         type: "uint8",
       },

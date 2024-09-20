@@ -87,7 +87,7 @@ describe("MutableProxyBeta", function () {
 				{
 					inputs: [
 						{
-							internalType: "enum AssemblyProxyBetaDummy.AdminFuctionPutType",
+							internalType: "enum AssemblyProxyBeta.AdminFuctionPutType",
 							name: "func",
 							type: "uint8",
 						},

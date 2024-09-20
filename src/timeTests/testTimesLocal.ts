@@ -9,6 +9,7 @@ import { AdminsStorage__factory } from "../typechain/factories/contracts/AdminsS
 import { AssemblyProxyBeta__factory } from "../AssemblyProxyBeta/AssemblyProxyBeta__factory";
 import { AssemblyProxyGamma__factory } from "../AssemblyProxyGamma/AssemblyProxyGamma__factory";
 import { TransactionExecutor } from "./TransactionExecutor";
+import { ProxyManager__factory } from "../ProxyManager/ProxyManager__factory";
 
 dotenv.config({ path: "./.env" });
 
@@ -63,10 +64,16 @@ async function run() {
 	const proxyRootGamma = await new AssemblyProxyGamma__factory(wallet1.address, erc20Addr, adminsStorageAddress, wallet0).deploy({ nonce: await wallet0.getNonce() });
 	await proxyRootGamma.waitForDeployment();
 
+	console.log("\nDEPLOYING PROXY MANAGER");
+	const proxyManager = await (await new ProxyManager__factory(wallet0).deploy()).waitForDeployment();
+	const deployProxyGammaEmbeddedTx = await (await proxyManager.deployProxy(await wallet1.getAddress(),erc20Addr)).wait();
+	const myProxyGammaEmbeddedAddr = `0x${deployProxyGammaEmbeddedTx?.logs[0].topics[1].substring(26)}`;
+
 	const basicProxy = ERC20Imp__factory.connect(await basic.getAddress(), wallet0);
 	const myProxyAlpha = ERC20Imp__factory.connect(await proxyRootAlpha.getAddress(), wallet0);
 	const myProxyBeta = ERC20Imp__factory.connect(await proxyRootBeta.getAddress(), wallet0);
 	const myProxyGamma = ERC20Imp__factory.connect(await proxyRootGamma.getAddress(), wallet0);
+	const myProxyGammaEmbedded = ERC20Imp__factory.connect(myProxyGammaEmbeddedAddr, wallet0);
 
 	const transactionExecutor = new TransactionExecutor(wallet0,console.log, [
 		{ name: "WITHOUT PROXY", contract: erc20 },
@@ -75,6 +82,7 @@ async function run() {
 		{ name: "MY PROXY ALPHA", contract: myProxyAlpha },
 		{ name: "MY PROXY BETA", contract: myProxyBeta },
 		{ name: "MY PROXY GAMMA", contract: myProxyGamma },
+		{ name: "MY PROXY GAMMA EMBRDDED", contract: myProxyGammaEmbedded },
 	]);
 
 	console.log("\nMINT 20");

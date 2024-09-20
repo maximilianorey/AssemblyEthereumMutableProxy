@@ -10,6 +10,7 @@ import { AssemblyProxyBeta__factory } from "../AssemblyProxyBeta/AssemblyProxyBe
 import { AssemblyProxyGamma__factory } from "../AssemblyProxyGamma/AssemblyProxyGamma__factory";
 import { getAllProviders, getProvider } from "../testnetWebs";
 import { TransactionExecutor } from "./TransactionExecutor";
+import { ProxyManager__factory } from "../ProxyManager/ProxyManager__factory";
 
 dotenv.config({ path: "./.env" });
 
@@ -36,16 +37,16 @@ async function runOne(webName: string, provider: Provider, mnemonic: string) {
 
 		const basicProxyFactory = new BasicProxy__factory(wallet0);
 		const basic = await basicProxyFactory.deploy(
-			wallet1.address,
+			await wallet1.getAddress(),
 			erc20Addr
 		);
 		await basic.waitForDeployment();
 		res += "\nDEPLOYING PROXY ALPHA";
 
-		const proxyRootAlpha = await new AssemblyProxyAlpha__factory(wallet1.address, erc20Addr, wallet0).deploy();
+		const proxyRootAlpha = await new AssemblyProxyAlpha__factory(await wallet1.getAddress(), erc20Addr, wallet0).deploy();
 		await proxyRootAlpha.waitForDeployment();
 		res += "\nDEPLOYING PROXY BETA";
-		const proxyRootBeta = await new AssemblyProxyBeta__factory(wallet1.address, erc20Addr, wallet0).deploy();
+		const proxyRootBeta = await new AssemblyProxyBeta__factory(await wallet1.getAddress(), erc20Addr, wallet0).deploy();
 		await proxyRootBeta.waitForDeployment();
 
 
@@ -53,13 +54,19 @@ async function runOne(webName: string, provider: Provider, mnemonic: string) {
 		const adminsStorageAddress = await (await (await new AdminsStorage__factory(wallet0).deploy()).waitForDeployment()).getAddress();
 	
 		res += "\nDEPLOYING PROXY GAMMA";
-		const proxyRootGamma = await new AssemblyProxyGamma__factory(wallet1.address, erc20Addr, adminsStorageAddress, wallet0).deploy({ nonce: await wallet0.getNonce() });
+		const proxyRootGamma = await new AssemblyProxyGamma__factory(await wallet1.getAddress(), erc20Addr, adminsStorageAddress, wallet0).deploy({ nonce: await wallet0.getNonce() });
 		await proxyRootGamma.waitForDeployment();
+
+		res += "\nDEPLOYING PROXY MANAGER";
+		const proxyManager = await (await new ProxyManager__factory(wallet0).deploy()).waitForDeployment();
+		const deployProxyGammaEmbeddedTx = await (await proxyManager.deployProxy(await wallet1.getAddress(),erc20Addr)).wait();
+		const myProxyGammaEmbeddedAddr = `0x${deployProxyGammaEmbeddedTx?.logs[0].topics[1].substring(26)}`;
 
 		const basicProxy = ERC20Imp__factory.connect(await basic.getAddress(), wallet0);
 		const myProxyAlpha = ERC20Imp__factory.connect(await proxyRootAlpha.getAddress(), wallet0);
 		const myProxyBeta = ERC20Imp__factory.connect(await proxyRootBeta.getAddress(), wallet0);
 		const myProxyGamma = ERC20Imp__factory.connect(await proxyRootGamma.getAddress(), wallet0);
+		const myProxyGammaEmbedded = ERC20Imp__factory.connect(myProxyGammaEmbeddedAddr, wallet0);
 
 		const transactionExecutor = new TransactionExecutor(wallet0, x => {res+=x;}, [
 			{ name: "WITHOUT PROXY", contract: erc20 },
@@ -68,6 +75,7 @@ async function runOne(webName: string, provider: Provider, mnemonic: string) {
 			{ name: "MY PROXY ALPHA", contract: myProxyAlpha },
 			{ name: "MY PROXY BETA", contract: myProxyBeta },
 			{ name: "MY PROXY GAMMA", contract: myProxyGamma },
+			{ name: "MY PROXY GAMMA EMBRDDED", contract: myProxyGammaEmbedded },
 		]);
 	
 		res += "\nMINT 20";

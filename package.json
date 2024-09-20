@@ -8,8 +8,8 @@
     "compile": "TS_NODE_TRANSPILE_ONLY=true hardhat --config ./hardhat.base.config.ts typechain && rm -r -f src/typechain && mv typechain-types src/typechain",
     "hardhat:node": "hardhat node --no-deploy",
     "test": "hardhat test",
-    "test-times-testnet": "node ./dist/testTimes.js",
-    "test-times-local": "node ./dist/testTimesLocal.js",
+    "test-times-testnet": "node ./dist/timeTests/testTimes.js",
+    "test-times-local": "node ./dist/timeTests/testTimesLocal.js",
     "lint": "eslint ./src --fix"
   },
   "dependencies": {
