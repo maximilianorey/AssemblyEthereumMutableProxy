@@ -2,29 +2,28 @@
 import "@nomicfoundation/hardhat-chai-matchers";
 import { expect } from "chai";
 
-import { Contract, Signer } from "ethers";
+import { Contract } from "ethers";
 import { ethers }  from "hardhat";
 
 import { AssemblyProxyBeta__factory } from "../src/AssemblyProxyBeta/AssemblyProxyBeta__factory";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("MutableProxyBeta", function () {
-	it("Should deploy a proxy with controller and call to transparent functions of proxy, and later change implementation", async function () {
-		const [ wallet ]: Signer[] = await ethers.getSigners();
+	async function test(wallet1: HardhatEthersSigner, wallet2: HardhatEthersSigner){
 		const erc20Factory = await ethers.getContractFactory("ERC20Imp");
 		const erc20_1 = await (await erc20Factory.deploy()).waitForDeployment();
 
-		const proxyFactory = new AssemblyProxyBeta__factory(await wallet.getAddress(),await erc20_1.getAddress(),wallet);
+		const proxyFactory = new AssemblyProxyBeta__factory(await wallet1.getAddress(),await erc20_1.getAddress(),wallet1);
 
 		const proxy = await (await proxyFactory.deploy()).waitForDeployment();
 
-		expect(await proxy.adminFunctionsGet("0")).to.be.equals(await erc20_1.getAddress());
-		expect(await proxy.adminFunctionsGet("1")).to.be.equals(await wallet.getAddress());
+		expect(await proxy.implementation()).to.be.equals(await erc20_1.getAddress());
 
-		const proxyERC20 = erc20Factory.attach(await proxy.getAddress());
+		const proxyERC20 = erc20Factory.connect(wallet2).attach(await proxy.getAddress());
 
-		expect((await proxyERC20.balanceOf(await wallet.getAddress())).toString()).to.be.equal("0");
-		await (await proxyERC20.mint(await wallet.getAddress(), "1000000000000000000")).wait();
-		expect((await proxyERC20.balanceOf(await wallet.getAddress())).toString()).to.be.equal(
+		expect((await proxyERC20.balanceOf(await wallet2.getAddress())).toString()).to.be.equal("0");
+		await (await proxyERC20.mint(await wallet2.getAddress(), "1000000000000000000")).wait();
+		expect((await proxyERC20.balanceOf(await wallet2.getAddress())).toString()).to.be.equal(
 			"1000000000000000000"
 		);
 
@@ -35,7 +34,7 @@ describe("MutableProxyBeta", function () {
 			)
 		).wait();
 
-		expect((await proxyERC20.balanceOf(await wallet.getAddress())).toString()).to.be.equal(
+		expect((await proxyERC20.balanceOf(await wallet2.getAddress())).toString()).to.be.equal(
 			"500000000000000000"
 		);
 
@@ -67,11 +66,11 @@ describe("MutableProxyBeta", function () {
 
 		await expect(txSI).to.emit(proxy,"Upgraded").withArgs(await erc20_2_instance.getAddress());
 
-		expect(await proxy.adminFunctionsGet("0")).to.be.equals(await erc20_2_instance.getAddress());
+		expect(await proxy.implementation()).to.be.equals(await erc20_2_instance.getAddress());
 
 		expect(await proxyERC20.something()).to.be.equal("ANOTHER NAME");
 
-		expect((await proxyERC20.balanceOf(await wallet.getAddress())).toString()).to.be.equal(
+		expect((await proxyERC20.balanceOf(await wallet2.getAddress())).toString()).to.be.equal(
 			"500000000000000000"
 		);
 
@@ -83,27 +82,8 @@ describe("MutableProxyBeta", function () {
 
 		const payableContract = new Contract(
 			await proxy.getAddress(),
-			[
-				{
-					inputs: [
-						{
-							internalType: "enum AssemblyProxyBeta.AdminFuctionPutType",
-							name: "func",
-							type: "uint8",
-						},
-						{
-							internalType: "address",
-							name: "parameter",
-							type: "address",
-						},
-					],
-					name: "adminFunctionsPut",
-					outputs: [],
-					stateMutability: "payable",
-					type: "function",
-				}
-			],
-			wallet
+			AssemblyProxyBeta__factory.abi.map(x => ({ ...x, stateMutability: "payable" })),
+			wallet1
 		);
 
 		await expect(
@@ -121,7 +101,7 @@ describe("MutableProxyBeta", function () {
 			)
 		).wait();
 
-		await expect(txCO).to.emit(proxy,"AdminChanged").withArgs(await wallet.getAddress(),BigInt(1));
+		await expect(txCO).to.emit(proxy,"AdminChanged").withArgs(await wallet1.getAddress(),BigInt(1));
 
 		await expect(
 			proxy.adminFunctionsPut(
@@ -133,5 +113,29 @@ describe("MutableProxyBeta", function () {
 		await expect(
 			proxy.adminFunctionsPut("0",await erc20_1.getAddress())
 		).to.be.reverted;
+	}
+	it("Should deploy a proxy with controller and call to transparent functions of proxy with admin wallet, and later change implementation", async function () {
+		const [ wallet ] = await ethers.getSigners();
+		await test(wallet,wallet);
+	});
+
+	it("Should deploy a proxy with controller and call to transparent functions of proxy with a wallet that's not the admin, and later change implementation", async function () {
+		const [ wallet1, wallet2 ] = await ethers.getSigners();
+		await test(wallet1,wallet2);
+	});
+
+	it("If wallet is not the admin all calls should be delegated", async function (){
+		const [ wallet1, wallet2 ] = await ethers.getSigners();
+		const implementationErrorsFactory = await ethers.getContractFactory("ImplementationErrors");
+		const implementationErrors_1 = await implementationErrorsFactory.deploy();
+		const implementationErrors_2 = await implementationErrorsFactory.deploy();
+
+		const proxyFactory = new AssemblyProxyBeta__factory(await wallet2.getAddress(),await implementationErrors_1.getAddress(),wallet1);
+
+		const proxy = await (await proxyFactory.deploy()).waitForDeployment();
+
+		await expect(proxy.implementation()).to.revertedWith("Implementation's 'implementation()' function called");
+		await expect(proxy.adminFunctionsPut(0,await implementationErrors_2.getAddress())).to.revertedWith("Implementation's 'adminFunctionsPut(uint8,address)' function called");
+		await expect(proxy.adminFunctionsPut(1,"0x0000000000000000000000000000000000000001")).to.revertedWith("Implementation's 'adminFunctionsPut(uint8,address)' function called");
 	});
 });

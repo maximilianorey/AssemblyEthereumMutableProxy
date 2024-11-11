@@ -20,14 +20,8 @@ import { EthereumException } from '../Exception/EthereumException'
 
 const _abi = [
   {
-    inputs: [
-      {
-        internalType: "enum AssemblyProxyBeta.AdminFuctionGetType",
-        name: "func",
-        type: "uint8",
-      },
-    ],
-    name: "adminFunctionsGet",
+    inputs: [],
+    name: "implementation",
     outputs: [
       {
         internalType: "address",

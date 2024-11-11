@@ -5,7 +5,7 @@ On solidity a mutable proxy is used when you need to deploy a contract witch cod
 
 Considering solidity’s compiler is very recent, it’s logical that it wouldn’t generate the most optime assembly output, in fact, it insert a lot of swap and pop that can be avoided. The problem is, on a smart contract a less optime code is more expensive to execute, so in this cases optimization is a priority. In this project, the proxy was constructed directly on Ethereum’s assembly.
 
-There are two proxies: the "alpha" version has a security bonus that OpenZeppeling's one hasn't but at the end is more expensive. The "beta" version hasn't this security bonus but its actually cheaper than OpenZeppeling's one.
+There are three proxies: the "alpha" version has a security bonus that OpenZeppeling's one hasn't but at the end is more expensive. The "beta" version hasn't this security bonus but its actually cheaper than OpenZeppeling's one. The "gamma" version consumes almost the same gas as OpenZeppeling's one but it has the extra security and require an extra contract deployed at least one time on the blockchain.
 
 # Assembly Proxy Alpha
 This version has extra security, but its execution is more expensive than OpenZeppeling's proxy. One problem with the proxy is the implementation can change the registers where the admin or the implementation address is stored. Of course, the admin had to put a contract with this implementation before, but is a way to introduce a back door. This proxy version checks the registers after the delegate call and ensures they have the same values. If not, it revert the transaction.
@@ -17,9 +17,9 @@ This version hasn't the increment on security, but its execution is chaper than 
 On this case when a proxy received a call will first check if the function's id matches with "adminFunctionsGet" or "adminFunctionsPut", and if not it will proceed to delegate the call to the implementation, so it doesn't have to use a SLOAD to get the admin address. If the function's id actually matches, it will proceed to get the admin address and if it match with the sender, it will execute the function and if not it will delegate the call.
 
 # Assembly Proxy Gamma
-This version is a midpoint between the other two. It's execution consumes almost the same gas as OpenZeppeling's one but it has the extra security. However, it has one problem, it required a third contract deployed (I call it AdminsStorage), but it's not one contract per proxy, once an instance of the "AdminsStorage" is on a blockchain, anyone can deploy a AssemblyProxyGamma, with the admin and implementation that they choose.
+This version is a midpoint between the other two. It's execution consumes almost the same gas as OpenZeppeling's one but it has the extra security. However, it has one problem, it required a third contract deployed (I call it ProxyManager), but it's not one contract per proxy, once an instance of the "ProxyManager" is on a blockchain, anyone can deploy a AssemblyProxyGamma, with the admin and implementation that they choose.
 
-What's the trick? Admin's address isn't storaged on the proxy but on the AdminsStorage contract. AdminsStorage is basically a map which can return the corresponding admin for an adress. A contract's admin's address only can be changed by the actual admin of this contract using the methos "changeAdmin(address contractAddress, address newAdmin)" (it will revert if the sender is not the admin of "contractAddress"). Also, a contract can "register" its admin for first time using the method "registerContract(address firstAdmin)" but only one time. If it try to execute this method again, will be reverted.
+What's the trick? Admin's address isn't storaged on the proxy but on the ProxyManager contract. ProxyManager is basically a map which can return the corresponding admin for an adress. A contract's admin's address only can be changed by the actual admin of this contract using the methods "changeAdmin(address contractAddress, address newAdmin)" (it will revert if the sender is not the admin of "contractAddress"). To deploy a proxy, you need to execute "deployProxy" function on the ProxyManager. This solution also resolve one problem respect the previews ones: if you need a contract that deploy a proxy, there is not an easy way to do that with the previews versions, because solidity doesn't allow you to include compiled code, but in this case you don't need to, you need only to import the interface and call to deployProxy function.
 
 Like the alpha's version, it will check if the implementation address matches after a DELEGATECALL. This require only an extra SLOAD.
 
@@ -46,13 +46,28 @@ Any "enum" type is considered as an "uint8"
 3. Third we have the length of the actual error ASCII-encoded message.
 4. The actual error ASCII-encoded text.
 
-This would allow we to print a message with a length of 2^4294967296 if had enoght gas. I don't know why it was done in this way but is the actual protocol. Also, lastest hardhat version only allow that third parameter was 32.
+Also, lastest hardhat version only allow that third parameter was 32.
 
 # Compilation
-1. Execute npm i command.
-2. If you want to modify TODO
-3. Execute npm run build
+1. Execute "npm i command".
+2. Execute "npm run compile"
+3. Execute "npm run build"
+
+If you want to modify on of the assembly, you should change the corresponding file on "assembly" folder and later change the typescript file with EthereumAssembly (https://github.com/maximilianorey/EthereumAssembler). 
+
+For example, if you want to change the assembly/assemblyCodeAlpha, you should execute "java -jar path/to/assemblier/jar fromTemplate assembly/assemblyProxyAlpha templates/AssemblyProxyAlpha__factory_template.ts src/AssemblyProxyAlpha/AssemblyProxyAlpha__factory.ts" after that
+
+Finally you will need to execute step 3 again.
+
+# Configuration
+Next step is copy the .env.example file as .env and define a mnemonic. If you want to generate a new one, you can execute npm run generate-mnemonic.
 
 # Test
-- npm run test checks TODO
-- npm run test-times-testnet 
+There are to types of test, one that check the correct functionality of proxy and other that checks the gas usage.
+
+For the first, you can execute "npm run test".
+
+For the second case, you can test it locally with hardhat or on testnets:
+To use hardhat, you should execute npm run hardhat:node on a terminal and "npm run test-gas-usage-local" on other terminal. The gas usage will appear the second terminal.
+
+For the testnets option, you can execute "npm run test-gas-usage-testnet". There are seven testnet configured: binance, sepolia, amoy, rsk, fantom, avax, cardona-zkevm, but you should define alchemy api keys for interact with some of them (by defining the .env parameters amoy_api_key sepolia_api_key polygon_zkevm). You can specify to execute only some of them by executing "npm run test-gas-usage-testnet -- --blockchains"  and then the list of blockchains to use separated by commas (example "npm run test-gas-usage-testnet -- --blockchains amoy,binance") or defined the parameter "blockchains" the on .env file.

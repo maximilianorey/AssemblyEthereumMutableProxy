@@ -25,26 +25,26 @@ import type {
 
 export interface AssemblyProxyBetaInterface extends Interface {
   getFunction(
-    nameOrSignature: "adminFunctionsGet" | "adminFunctionsPut"
+    nameOrSignature: "adminFunctionsPut" | "implementation"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "AdminChanged" | "Upgraded"): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "adminFunctionsGet",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "adminFunctionsPut",
     values: [BigNumberish, AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "implementation",
+    values?: undefined
+  ): string;
 
   decodeFunctionResult(
-    functionFragment: "adminFunctionsGet",
+    functionFragment: "adminFunctionsPut",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "adminFunctionsPut",
+    functionFragment: "implementation",
     data: BytesLike
   ): Result;
 }
@@ -117,25 +117,18 @@ export interface AssemblyProxyBeta extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  adminFunctionsGet: TypedContractMethod<
-    [func: BigNumberish],
-    [string],
-    "view"
-  >;
-
   adminFunctionsPut: TypedContractMethod<
     [func: BigNumberish, parameter: AddressLike],
     [void],
     "nonpayable"
   >;
 
+  implementation: TypedContractMethod<[], [string], "view">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "adminFunctionsGet"
-  ): TypedContractMethod<[func: BigNumberish], [string], "view">;
   getFunction(
     nameOrSignature: "adminFunctionsPut"
   ): TypedContractMethod<
@@ -143,6 +136,9 @@ export interface AssemblyProxyBeta extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "implementation"
+  ): TypedContractMethod<[], [string], "view">;
 
   getEvent(
     key: "AdminChanged"

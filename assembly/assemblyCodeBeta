@@ -163,12 +163,12 @@ END CONSTRUCTOR
 0x80 // DUP1 (FUNCTION HASH)
 
 0x63 // PUSH4
-0xb0 // id of adminFunctionsGet(uint8)
-0xee
-0x3a
-0xe7
+0x5C // id of implementation()
+0x60
+0xDA
+0x1B
 0x14 // EQ
-0x61 <S>GET FUNCTIONS<S>
+0x61 <S>implementation direction<S>
 0x57 // JUMPI
 
 
@@ -409,7 +409,7 @@ END CONSTRUCTOR
 0xA3 // LOG3
 0x00 // STOP
 
-0x5B // <D>GET FUNCTIONS<D>
+0x5B // <D>implementation direction<D>
 
 0x7F // PUSH 32
 0xFF // 
@@ -454,13 +454,6 @@ END CONSTRUCTOR
 0x61 // PUSH2 <S>DIRECTION OF NOT PAYMENT ALLOWED<S>
 0x57 // JUMPI
 
-
-0x60
-0x04 // PUSH 4
-0x35 // CALLDATALOAD
-0x61 // PUSH2 <S>Admin FUNCTION<S>
-0x57 //JUMPI
-
 0x7F // PUSH32
 0xFF
 0xFF
@@ -495,17 +488,6 @@ END CONSTRUCTOR
 0xFF
 0xFE // direction of _IMPLEMENTATION_SLOT
 0x54 // SLOAD (_IMPLEMENTATION_SLOT)
-0x60 // PUSH1
-0x00 // 0
-0x52 // MSTORE
-0x60 //PUSH1
-0x20 //32 (RETURN SIZE)
-0x60 //PUSH1
-0x00 //0 (RETURN OFFSET)
-0xF3 //RETURN
-
-0x5B // <D>Admin FUNCTION<D>
-0x33 // MSG.CALLER
 0x60 // PUSH1
 0x00 // 0
 0x52 // MSTORE

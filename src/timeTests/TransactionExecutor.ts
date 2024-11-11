@@ -1,13 +1,13 @@
 import type { ContractMethodArgs, HDNodeWallet, Typed } from "ethers";
 import { TypedContractMethod } from "../typechain/common";
-import { BasicUpgradeable, ERC20Imp } from "../typechain";
+import { ERC20Imp } from "../typechain";
 
 export class TransactionExecutor{
-	private contracts: Array<{name: string, contract: ERC20Imp | BasicUpgradeable}>;
+	private contracts: Array<{name: string, contract: ERC20Imp }>;
 	private wallet: HDNodeWallet;
 	private callback: (log: string) => void;
 
-	constructor(wallet: HDNodeWallet, callback: (log: string) => void, contracts: Array<{name: string, contract: ERC20Imp | BasicUpgradeable}>){
+	constructor(wallet: HDNodeWallet, callback: (log: string) => void, contracts: Array<{name: string, contract: ERC20Imp }>){
 		this.contracts = contracts;
 		this.wallet = wallet;
 		this.callback = callback;
@@ -24,7 +24,7 @@ export class TransactionExecutor{
 		this.callback(`\tGAS ESTIMATED: ${estimated}\tGAS USED: ${transaction.gasUsed}`);
 	};
 
-	estimateGasAndExecute<A extends Array<unknown>>(methodGetter: (contract: ERC20Imp | BasicUpgradeable) => TypedContractMethod<A>, ...params: { [ I in keyof A ]-?: A[I] | Typed }) {
+	estimateGasAndExecute<A extends Array<unknown>>(methodGetter: (contract: ERC20Imp ) => TypedContractMethod<A>, ...params: { [ I in keyof A ]-?: A[I] | Typed }) {
 		return this.contracts.reduce(async (acum,{ name,contract }) => {
 			await acum;
 			this.callback(`\n\t${name}`);

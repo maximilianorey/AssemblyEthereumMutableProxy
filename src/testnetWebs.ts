@@ -2,12 +2,12 @@ import { JsonRpcProvider } from "ethers";
 
 const blockchains: {[key: string]: {name: string, url: string, alchemy_key?: string}} = {
 	binance: { name: "binance", url: "https://data-seed-prebsc-2-s3.binance.org:8545" },
-	sepolia: { name: "sepolia", url: "https://eth-sepolia.g.alchemy.com/v2/", alchemy_key: "sepolia_api_key" },
-	amoy: { name: "amoy (polygon)", url: "https://polygon-amoy.g.alchemy.com/v2/", alchemy_key: "amoy_api_key" },
+	sepolia: { name: "sepolia", url: "https://unichain-sepolia.g.alchemy.com/v2/", alchemy_key: "sepolia_api_key" },
+	amoy: { name: "amoy (polygon)", url: "https://polygon-mainnet.g.alchemy.com/v2/", alchemy_key: "amoy_api_key" },
 	rsk: { name: "rsk", url: "https://public-node.testnet.rsk.co" },
 	fantom: { name: "fantom", url: "https://rpc.testnet.fantom.network" },
 	avax: { name: "avax", url: "https://api.avax-test.network/ext/bc/C/rpc" },
-	"cardona-zkevm": { name: "cardona-zkevm (polygon)", url: "https://polygonzkevm-cardona.g.alchemy.com/v2/", alchemy_key: "polygon_zkevm" }
+	"cardona-zkevm": { name: "cardona-zkevm (polygon)", url: "https://polygonzkevm-mainnet.g.alchemy.com/v2/", alchemy_key: "polygon_zkevm" }
 };
 
 function generateProvider(blockchainData: {name: string, url: string, alchemy_key?: string}): {isError: false, name: string, provider: JsonRpcProvider } | {isError: true, error: string}{
