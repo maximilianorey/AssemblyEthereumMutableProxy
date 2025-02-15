@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 import { ethers }  from "hardhat";
 
-import { AssemblyProxyBeta__factory } from "../src/AssemblyProxyBeta/AssemblyProxyBeta__factory";
+import { AssemblyProxyBeta__factory } from "../src/ProxyFactories/AssemblyProxyBeta__factory";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("MutableProxyBeta", function () {

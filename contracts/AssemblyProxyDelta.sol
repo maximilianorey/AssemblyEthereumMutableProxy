@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-interface AssemblyProxyGamma{
+interface AssemblyProxyDelta{
     enum AdminFuctionGetType{ IMPLEMENTATION, PROXY_MANAGER }
     event Upgraded(address indexed implementation);
 

@@ -3,7 +3,7 @@ import { expect } from "chai";
 
 import { Contract } from "ethers";
 import { ethers }  from "hardhat";
-import { AssemblyProxyAlpha__factory } from "../src/AssemblyProxyAlpha/AssemblyProxyAlpha__factory";
+import { AssemblyProxyAlpha__factory } from "../src/ProxyFactories/AssemblyProxyAlpha__factory";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("MutableProxyAlpha", function () {
