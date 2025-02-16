@@ -245,7 +245,7 @@ END CONSTRUCTOR
 0x5B // JUMPDST <D>changeAdmin - Proxy is registered<D>
 0x33 // SENDER
 0x03 // SUB
-0x61 // PUSH1 <S>changeAdmin - Caller is not the actual admin<S>
+0x61 // PUSH1 <S>Caller is not the actual admin<S>
 0x57 // JUMPI
 
 0x55 // SSTORE
@@ -346,7 +346,7 @@ END CONSTRUCTOR
 0x54 // SLOAD (ACTUAL ADMIN)
 0x33 // SENDER
 0x03 // SUB
-0x61 // <S>changeAdmin - Caller is not the actual admin<S>
+0x61 // <S>Caller is not the actual admin<S>
 0x57 // JUMPI
 
 0x60 // PUSH1
@@ -458,7 +458,7 @@ END CONSTRUCTOR
 0x00 //STOP
 
 
-0x5B // JUMPDST <D>changeAdmin - Caller is not the actual admin<D>
+0x5B // JUMPDST <D>Caller is not the actual admin<D>
 <ERROR>Caller is not the actual admin.
 0x5B // JUMPDST <D>FUNCTION NOT FOUND<D>
 <ERROR>FUNCTION NOT FOUND.
