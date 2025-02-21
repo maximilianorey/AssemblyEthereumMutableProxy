@@ -14,9 +14,9 @@ import type {
 } from "ethers";
 import type { NonPayableOverrides } from "../typechain/common";
 import type {
-  AssemblyProxyGamma,
-  AssemblyProxyGammaInterface,
-} from "./AssemblyProxyGamma";
+  AssemblyProxyDelta,
+  AssemblyProxyDeltaInterface,
+} from "../typechain/contracts/AssemblyProxyDelta";
 import { EthereumException } from "../Exception/EthereumException";
 
 const _abi = [
@@ -36,7 +36,7 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "enum AssemblyProxyGamma.AdminFuctionGetType",
+        internalType: "enum AssemblyProxyDelta.AdminFuctionGetType",
         name: "func",
         type: "uint8",
       },
@@ -70,7 +70,7 @@ const _abi = [
 const _bytecode =
   "<BINARYCODE>";
 
-export class AssemblyProxyGamma__factory extends ContractFactory {
+export class AssemblyProxyDelta__factory extends ContractFactory {
   constructor(admin: string, implementation: string, adminStorage: string, signer?: Signer) {
     let cAdmin = admin.startsWith("0x") ? admin.substring(2) : admin;
     let cImplementation = implementation.startsWith("0x") ? implementation.substring(2) : implementation;
@@ -93,11 +93,11 @@ export class AssemblyProxyGamma__factory extends ContractFactory {
     }
 
     if(!/^[0-9a-fA-F]+$/.test(cAdminStorage)){
-      throw new EthereumException("ADMIN STORAGE ADDRESS IS NOT A VALID HEX NUMBER");
+      throw new EthereumException("PROXY MANAGER ADDRESS IS NOT A VALID HEX NUMBER");
     }
 
     if(cAdminStorage.length > 64){
-      throw new EthereumException("ADMIN STORAGE ADDRESS HAS WRONG LENGTH SHOULD BE 64 (32 BYTES) FOUND: " + cImplementation.length);
+      throw new EthereumException("PROXY MANAGER  ADDRESS HAS WRONG LENGTH SHOULD BE 64 (32 BYTES) FOUND: " + cImplementation.length);
     }
 
     if(cAdmin.length !==64){
@@ -118,7 +118,7 @@ export class AssemblyProxyGamma__factory extends ContractFactory {
     const adminStorageCode = Buffer.from(cAdminStorage);
     adminCode.copy(buffCode,(<P>ADMIN<P>)[0]*2);
     implementationCode.copy(buffCode,(<P>IMPL<P>)[0]*2);
-    (<P>ADMIN_STORAGE_ADDRESS<P>).map(x => adminStorageCode.copy(buffCode,x*2));
+    (<P>PROXY_MANAGER_ADDRESS<P>).map(x => adminStorageCode.copy(buffCode,x*2));
     super(_abi, buffCode.toString(), signer);
   }
 
@@ -129,30 +129,30 @@ export class AssemblyProxyGamma__factory extends ContractFactory {
   }
   override deploy(overrides?: NonPayableOverrides & { from?: string }) {
     return super.deploy(overrides || {}) as Promise<
-      AssemblyProxyGamma & {
+      AssemblyProxyDelta & {
         deploymentTransaction(): ContractTransactionResponse;
       }
     >;
   }
   override connect(
     runner: ContractRunner | null
-  ): AssemblyProxyGamma__factory {
-    return super.connect(runner) as AssemblyProxyGamma__factory;
+  ): AssemblyProxyDelta__factory {
+    return super.connect(runner) as AssemblyProxyDelta__factory;
   }
 
   static readonly bytecode = _bytecode;
   static readonly abi = _abi;
-  static createInterface(): AssemblyProxyGammaInterface {
-    return new Interface(_abi) as AssemblyProxyGammaInterface;
+  static createInterface(): AssemblyProxyDeltaInterface {
+    return new Interface(_abi) as AssemblyProxyDeltaInterface;
   }
   static connect(
     address: string,
     runner?: ContractRunner | null
-  ): AssemblyProxyGamma {
+  ): AssemblyProxyDelta {
     return new Contract(
       address,
       _abi,
       runner
-    ) as unknown as AssemblyProxyGamma;
+    ) as unknown as AssemblyProxyDelta;
   }
 }

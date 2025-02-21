@@ -1,6 +1,0 @@
-dist
-node_modules
-artifacts
-cache
-src/typechain
-assembly

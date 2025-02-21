@@ -12,16 +12,16 @@ const blockchains: {[key: string]: {name: string, url: string, alchemy_key?: str
 
 function generateProvider(blockchainData: {name: string, url: string, alchemy_key?: string}): {isError: false, name: string, provider: JsonRpcProvider } | {isError: true, error: string}{
 	if(blockchainData.alchemy_key){
-		if(!process.env[blockchainData.alchemy_key]){
+		if(!process.env[ blockchainData.alchemy_key ]){
 			return { isError: true, error: "ALCHEMY KEY NOT SET" };
 		}
-		return { isError: false, name: blockchainData.name, provider: new JsonRpcProvider(blockchainData.url + process.env[blockchainData.alchemy_key]) };
+		return { isError: false, name: blockchainData.name, provider: new JsonRpcProvider(blockchainData.url + process.env[ blockchainData.alchemy_key ]) };
 	}
 	return { isError: false, name: blockchainData.name, provider: new JsonRpcProvider(blockchainData.url) };
 }
 
 export function getProvider(blockchainName: string): { isError: false, name: string, provider: JsonRpcProvider } | {isError: true, error: string} {
-	const blockchainData = blockchains[blockchainName];
+	const blockchainData = blockchains[ blockchainName ];
 	if(!blockchainData) return { isError: true, error: `UNKNOWN BLOCKCHAIN: '${blockchainName}'` };
 	return generateProvider(blockchainData);
 }

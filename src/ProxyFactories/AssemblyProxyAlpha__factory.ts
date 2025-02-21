@@ -14,7 +14,7 @@ import type {
 } from "ethers";
 import type { NonPayableOverrides } from "../typechain/common";
 
-import type { AssemblyProxyAlpha, AssemblyProxyAlphaInterface } from "./AssemblyProxyAlpha";
+import type { AssemblyProxyAlpha, AssemblyProxyAlphaInterface } from "../typechain/contracts/AssemblyProxyAlpha";
 import { EthereumException } from '../Exception/EthereumException';
 
 const _abi = [

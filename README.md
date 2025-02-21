@@ -5,19 +5,19 @@ On solidity a mutable proxy is used when you need to deploy a contract witch cod
 
 Considering solidity’s compiler is very recent, it’s logical that it wouldn’t generate the most optime assembly output, in fact, it insert a lot of swap and pop that can be avoided. The problem is, on a smart contract a less optime code is more expensive to execute, so in this cases optimization is a priority. In this project, the proxy was constructed directly on Ethereum’s assembly.
 
-There are three proxies: the "alpha" version has a security bonus that OpenZeppeling's one hasn't but at the end is more expensive. The "beta" version hasn't this security bonus but its actually cheaper than OpenZeppeling's one. The "gamma" version consumes almost the same gas as OpenZeppeling's one but it has the extra security and require an extra contract deployed at least one time on the blockchain.
+There are three proxies: the "alpha" version has a security bonus that OpenZeppeling's one hasn't but at the end is more expensive. The "beta" version hasn't this security bonus but its actually cheaper than OpenZeppeling's one. The "delta" version consumes almost the same gas as OpenZeppeling's one but it has the extra security and require an extra contract deployed at least one time on the blockchain.
 
 # Assembly Proxy Alpha
 This version has extra security, but its execution is more expensive than OpenZeppeling's proxy. One problem with the proxy is the implementation can change the registers where the admin or the implementation address is stored. Of course, the admin had to put a contract with this implementation before, but is a way to introduce a back door. This proxy version checks the registers after the delegate call and ensures they have the same values. If not, it revert the transaction.
 
 
 # Assembly Proxy Beta
-This version hasn't the increment on security, but its execution is chaper than OpenZeppeling's proxy. For optimization purpouses, this code didn't respect the OpenZeppeling's proxy's interface, but has two functions: "adminFunctionsGet" witch receive one enum parameter and returns the implementation address or admin address depending what it have received, and "adminFunctionsPut" witch receive one enum parameter and one address parameter and set admin's or implementation's direction (depends of what it have received as first parameter) to the address given as second parameter. Of course this functions can only be called by the actual admin.
+This version hasn't the increment on security, but its execution is chaper than OpenZeppeling's proxy. For optimization purpouses, this code didn't respect the OpenZeppeling's proxy's interface, but has two functions: "implementation" witch returns the implementation address, and "adminFunctionsPut" witch receive one enum parameter and one address parameter and set admin's or implementation's direction (depends of what it have received as first parameter) to the address given as second parameter. Of course this functions can only be called by the actual admin.
 
-On this case when a proxy received a call will first check if the function's id matches with "adminFunctionsGet" or "adminFunctionsPut", and if not it will proceed to delegate the call to the implementation, so it doesn't have to use a SLOAD to get the admin address. If the function's id actually matches, it will proceed to get the admin address and if it match with the sender, it will execute the function and if not it will delegate the call.
+On this case when a proxy received a call will first check if the function's id matches with "implementation" or "adminFunctionsPut", and if not it will proceed to delegate the call to the implementation, so it doesn't have to use a SLOAD to get the admin address. If the function's id actually matches, it will proceed to get the admin address and if it match with the sender, it will execute the function and if not it will delegate the call.
 
-# Assembly Proxy Gamma
-This version is a midpoint between the other two. It's execution consumes almost the same gas as OpenZeppeling's one but it has the extra security. However, it has one problem, it required a third contract deployed (I call it ProxyManager), but it's not one contract per proxy, once an instance of the "ProxyManager" is on a blockchain, anyone can deploy a AssemblyProxyGamma, with the admin and implementation that they choose.
+# Assembly Proxy Delta
+This version is a midpoint between the other two. It's execution consumes almost the same gas as OpenZeppeling's one but it has the extra security. However, it has one problem, it required a third contract deployed (I call it ProxyManager), but it's not one contract per proxy, once an instance of the "ProxyManager" is on a blockchain, anyone can deploy a AssemblyProxyDelta, with the admin and implementation that they choose.
 
 What's the trick? Admin's address isn't storaged on the proxy but on the ProxyManager contract. ProxyManager is basically a map which can return the corresponding admin for an adress. A contract's admin's address only can be changed by the actual admin of this contract using the methods "changeAdmin(address contractAddress, address newAdmin)" (it will revert if the sender is not the admin of "contractAddress"). To deploy a proxy, you need to execute "deployProxy" function on the ProxyManager. This solution also resolve one problem respect the previews ones: if you need a contract that deploy a proxy, there is not an easy way to do that with the previews versions, because solidity doesn't allow you to include compiled code, but in this case you don't need to, you need only to import the interface and call to deployProxy function.
 
@@ -26,6 +26,10 @@ Like the alpha's version, it will check if the implementation address matches af
 Its interface has two functions:
 - "adminFunctionsGet" that, similar to beta's interface, witch receive one enum parameter and returns the implementation address or AdminsStorage's contract
 - "upgradeTo" that changes the implementation address if the caller is the admin. Inside the method, the proxy calls to AdminsStorage contract to recover its admin's address. It's more expensive, but its not part of the proxy's normal flow, so any user that call a not admin function don't have to worry about that.
+
+# Assembly Proxy Epsilon
+A variant of delta one, this version also need a ProxyManager but in this case it hasn't an own interface. If the admin need to change the implementation address, it will need to call an "upgradeTo" function on the ProxyManager, and ProxyManager will make a call to the proxy after check the caller is actually the owner of this proxy. In this case, proxy algorithm check if the caller is the ProxyManager or not.
+This is a little cheapper than delta version while is delegating, but more expensive when "upgradeTo" is called. It also solves a problem: in this case the proxy is totally transparent for users, but anyone can consult the actual owner or implementation for a proxy by calling the ProxyManager.
 
 # Ethereum function scheme
 I am writting this section because there are elements from the smart contract's flow that are invisible when we compiling a code from solidity.
@@ -46,7 +50,7 @@ Any "enum" type is considered as an "uint8"
 3. Third we have the length of the actual error ASCII-encoded message.
 4. The actual error ASCII-encoded text.
 
-Also, lastest hardhat version only allow that third parameter was 32.
+Also, lastest hardhat version only allow that second parameter was 32 (and third parameter a 32-byte-length value).
 
 # Compilation
 1. Execute "npm i command".

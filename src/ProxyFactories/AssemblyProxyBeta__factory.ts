@@ -14,7 +14,7 @@ import type { NonPayableOverrides } from "../typechain/common";
 import type {
   AssemblyProxyBeta,
   AssemblyProxyBetaInterface,
-} from "./AssemblyProxyBeta";
+} from "../typechain/contracts/AssemblyProxyBeta";
 
 import { EthereumException } from '../Exception/EthereumException'
 
