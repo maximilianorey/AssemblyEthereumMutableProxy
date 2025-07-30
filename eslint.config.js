@@ -2,44 +2,25 @@ const js = require("@eslint/js");
 const globals = require("globals");
 const tseslint = require("typescript-eslint");
 const prettierPlugin = require("eslint-plugin-prettier");
-const json = require("@eslint/json")
+const json = require("eslint-plugin-json");
+const { globalIgnores } = require("eslint/config");
 
 module.exports = tseslint.config(
+	globalIgnores([
+		"dist",
+		"node_modules",
+		"artifacts",
+		"cache",
+		"templates",
+		"src/typechain",
+		"assembly"
+	]),
 	{
-		ignores: [
-			"dist",
-			"node_modules",
-			"artifacts",
-			"cache",
-			"templates",
-			"src/typechain",
-			"assembly"
-		] 
-	},
-	{
-		ignores: [
-			"dist",
-			"node_modules",
-			"artifacts",
-			"cache",
-			"templates",
-			"src/typechain",
-			"assembly"
-		],
 		files: [ "**/*.{js,ts}" ],
 		plugins: { prettier: prettierPlugin },
 		languageOptions: { globals: globals.node }
 	},
 	{
-		ignores: [
-			"dist",
-			"node_modules",
-			"artifacts",
-			"cache",
-			"templates",
-			"src/typechain",
-			"assembly"
-		],
 		extends: [ js.configs.recommended ],
 		files: [ "**/*.js" ],
 		rules: { 
@@ -89,15 +70,6 @@ module.exports = tseslint.config(
 		}
 	},
 	{
-		ignores: [
-			"dist",
-			"node_modules",
-			"artifacts",
-			"cache",
-			"templates",
-			"src/typechain",
-			"assembly"
-		],
 		extends: [
 			js.configs.recommended,
 			...tseslint.configs.recommended
@@ -132,11 +104,7 @@ module.exports = tseslint.config(
 		}
 	},
 	{
-		plugins: json,
-        files: ["**/*.json"],
-        language: "json/json",
-        rules: {
-            "json/no-duplicate-keys": "error",
-        },
-    },
+		...json.configs[ "recommended" ],
+		files: [ "**/*.json" ]
+	},
 );
