@@ -1,7 +1,8 @@
-src/typechain
-node_modules
-dist
-cache
-artifacts
 .env
+artifacts
+cache
 contractsDirections.json
+dist
+node_modules
+out
+src/typechain

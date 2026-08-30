@@ -8,7 +8,7 @@ import { ProxyManagerEpsilon__factory } from "../ProxyFactories/ProxyManagerEpsi
 import { BasicProxy__factory as BasicProxy__factory_forge } from "../forge/BasicProxy__factory";
 import { TransactionExecutor } from "./TransactionExecutor";
 import { AssemblyProxyDelta__factory, BasicProxy__factory,ERC20Imp__factory } from "../typechain";
-import { derivateWallet } from "../utils/utils";
+import { derivateWallet, sleep } from "../utils/utils";
 
 dotenv.config({ path: "./.env" });
 
@@ -24,7 +24,7 @@ async function run() {
 
 	const wallet0 = Wallet.fromPhrase(mnemonic).connect(provider);
 	const wallet1 = derivateWallet(mnemonic,1).connect(provider);
-	const wallet2 = derivateWallet(mnemonic,2).connect(provider).connect(provider);
+	const wallet2 = derivateWallet(mnemonic,2).connect(provider);
 
 	const erc20Factory = new ERC20Imp__factory(wallet0);
 	console.log("\nDEPLOYING ERC20");
@@ -32,6 +32,7 @@ async function run() {
 	await erc20.waitForDeployment();
 	const erc20Addr = await erc20.getAddress();
 
+	await sleep(500);
 	console.log("\nDEPLOYING BASIC PROXY (hardhat)");
 	const basicProxyFactory = new BasicProxy__factory(wallet0);
 	const basic = await basicProxyFactory.deploy(
@@ -41,6 +42,7 @@ async function run() {
 	);
 	await basic.waitForDeployment();
 
+	await sleep(500);
 	console.log("\nDEPLOYING BASIC PROXY (forge)");
 	const basicProxyFactoryForge = new BasicProxy__factory_forge(wallet0);
 	const basicForge = await basicProxyFactoryForge.deploy(
@@ -50,23 +52,28 @@ async function run() {
 	);
 	await basicForge.waitForDeployment();
 	
+	await sleep(500);
 	console.log("\nDEPLOYING PROXY ALPHA");
 	const proxyRootAlpha = await new AssemblyProxyAlpha__factory(wallet1.address, erc20Addr, wallet0).deploy({ nonce: await wallet0.getNonce() });
 	await proxyRootAlpha.waitForDeployment();
+	await sleep(500);
 	console.log("\nDEPLOYING PROXY BETA");
 	const proxyRootBeta = await new AssemblyProxyBeta__factory(wallet1.address, erc20Addr, wallet0).deploy({ nonce: await wallet0.getNonce() });
 	await proxyRootBeta.waitForDeployment();
 
+	await sleep(500);
 	console.log("\nDEPLOYING PROXY MANAGER DELTA");
-	const proxyManager = await (await new ProxyManagerDelta__factory(wallet0).deploy()).waitForDeployment();
+	const proxyManager = await (await new ProxyManagerDelta__factory(wallet0).deploy({ nonce: await wallet0.getNonce() })).waitForDeployment();
 	const deployProxyDeltaTx = await (await proxyManager.deployProxy(await wallet1.getAddress(),erc20Addr)).wait();
 	const myProxyDeltaAddr = (deployProxyDeltaTx?.logs[ 0 ] as EventLog).args[ 0 ];
 
+	await sleep(500);
 	console.log("\nDEPLOYING PROXY MANAGER EPSILON");
-	const proxyManagerEpsilon = await (await new ProxyManagerEpsilon__factory(wallet0).deploy()).waitForDeployment();
+	const proxyManagerEpsilon = await (await new ProxyManagerEpsilon__factory(wallet0).deploy({ nonce: await wallet0.getNonce() })).waitForDeployment();
 	const deployProxyEpsilonTx = await (await proxyManagerEpsilon.deployProxy(await wallet1.getAddress(),erc20Addr)).wait();
 	const myProxyEpsilonAddr = (deployProxyEpsilonTx?.logs[ 0 ] as EventLog).args[ 0 ];
 
+	await sleep(500);
 	const basicProxy = ERC20Imp__factory.connect(await basic.getAddress(), wallet0);
 	const basicProxyForge = ERC20Imp__factory.connect(await basicForge.getAddress(), wallet0);
 	const myProxyAlpha = ERC20Imp__factory.connect(await proxyRootAlpha.getAddress(), wallet0);
@@ -97,6 +104,7 @@ async function run() {
 	await transactionExecutor.estimateGasAndExecute(contract => contract.transfer,"0x0000000000000000000000000000000000000001","5");
 
 	console.log("\n\nADMIN FUNCTIONS");
+	await sleep(500);
 	const erc20_2 = await erc20Factory.deploy({ nonce: await wallet0.getNonce() });
 	await erc20_2.waitForDeployment();
 	const erc20_2Addr = await erc20_2.getAddress();

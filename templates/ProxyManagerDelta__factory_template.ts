@@ -6,8 +6,10 @@ import {
   ContractFactory,
   ContractTransactionResponse,
   Interface,
+  type Signer,
+  type ContractDeployTransaction,
+  type ContractRunner
 } from "ethers";
-import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
 import type { NonPayableOverrides } from "../typechain/common";
 import type {
   ProxyManagerDelta,
@@ -104,7 +106,7 @@ const _abi = [
 ] as const;
 
 const _bytecode =
-  "<BINARYCODE>";
+  "0x<BINARYCODE>";
 
 type ProxyManagerDeltaConstructorParams =
   | [signer?: Signer]

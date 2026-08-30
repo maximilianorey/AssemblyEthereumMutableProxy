@@ -3,8 +3,9 @@ import { expect } from "chai";
 
 import { Contract } from "ethers";
 import { ethers }  from "hardhat";
-import { AssemblyProxyAlpha__factory } from "../src/ProxyFactories/AssemblyProxyAlpha__factory";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+
+import { AssemblyProxyAlpha__factory } from "../src/ProxyFactories/AssemblyProxyAlpha__factory";
 
 describe("MutableProxyAlpha", function () {
 	async function test(wallet1: HardhatEthersSigner, wallet2: HardhatEthersSigner){

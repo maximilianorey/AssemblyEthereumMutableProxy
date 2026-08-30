@@ -55,13 +55,9 @@ Also, lastest hardhat version only allow that second parameter was 32 (and third
 # Compilation
 1. Execute "npm i command".
 2. Execute "npm run compile"
-3. Execute "npm run build"
+3. Execute "npm run assembly"
+4. Execute "npm run build"
 
-If you want to modify on of the assembly, you should change the corresponding file on "assembly" folder and later change the typescript file with EthereumAssembly (https://github.com/maximilianorey/EthereumAssembler). 
-
-For example, if you want to change the assembly/assemblyCodeAlpha, you should execute "java -jar path/to/assemblier/jar fromTemplate assembly/assemblyProxyAlpha templates/AssemblyProxyAlpha__factory_template.ts src/AssemblyProxyAlpha/AssemblyProxyAlpha__factory.ts" after that
-
-Finally you will need to execute step 3 again.
 
 # Configuration
 Next step is copy the .env.example file as .env and define a mnemonic. If you want to generate a new one, you can execute npm run generate-mnemonic.

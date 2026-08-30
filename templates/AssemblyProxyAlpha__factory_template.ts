@@ -6,12 +6,11 @@ import {
   ContractFactory,
   ContractTransactionResponse,
   Interface,
+  type Signer,
+  type ContractDeployTransaction,
+  type ContractRunner,
 } from "ethers";
-import type {
-  Signer,
-  ContractDeployTransaction,
-  ContractRunner,
-} from "ethers";
+
 import type { NonPayableOverrides } from "../typechain/common";
 
 import type { AssemblyProxyAlpha, AssemblyProxyAlphaInterface } from "../typechain/contracts/AssemblyProxyAlpha";
@@ -105,7 +104,7 @@ const _abi = [
 ] as const;
 
 let _bytecode =
-  "<BINARYCODE>"
+  "0x<BINARYCODE>"
 
 export class AssemblyProxyAlpha__factory extends ContractFactory {
   constructor(admin: string, implementation: string, signer?: Signer) {
@@ -139,8 +138,8 @@ export class AssemblyProxyAlpha__factory extends ContractFactory {
       const buffCode = Buffer.from(_bytecode);
       const adminCode = Buffer.from(cAdmin);
       const implementationCode = Buffer.from(cImplementation);
-      adminCode.copy(buffCode,<P>ADMIN<P>[0]*2);
-      implementationCode.copy(buffCode,<P>IMPL<P>[0]*2);
+      adminCode.copy(buffCode,<P>ADMIN<P>[0]*2 + 2);
+      implementationCode.copy(buffCode,<P>IMPL<P>[0]*2 + 2);
       super(_abi, buffCode.toString(), signer);
     
   }

@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "assembly": "sh assembly.sh",
     "build": "tsc -b",
     "compile": "TS_NODE_TRANSPILE_ONLY=true hardhat --config ./hardhat.base.config.ts typechain && rm -r -f src/typechain && mv typechain-types src/typechain",
     "generate-mnemonic": "node ./dist/generateMnemonic.js",
     "hardhat:node": "hardhat node",
-    "test": "hardhat test",
+    "test": "hardhat test && forge test",
     "test-gas-usage-testnet": "node ./dist/timeTests/testGasUsage.js",
     "test-gas-usage-local": "node ./dist/timeTests/testGasUsageLocal.js",
     "lint": "eslint . --fix"

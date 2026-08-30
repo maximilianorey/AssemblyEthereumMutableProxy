@@ -188,7 +188,7 @@ const isSuperArgs = (
 ): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
 
 const _bytecode =
-  "<BINARYCODE>";
+  "0x<BINARYCODE>";
 
 export class ProxyManagerEpsilon__factory extends ContractFactory{
   constructor(...args: ProxyManagerEpsilonConstructorParams) {

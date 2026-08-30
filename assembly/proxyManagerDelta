@@ -1,260 +1,171 @@
-0x61 // PUSH2 <S>CODE LENGTH<S>
-0x60 // PUSH1
-0x00 // 0
-0x81 // DUP2 (CODELENGTH)
-0x61 // PUSH1 <S>CONSTRUCTOR LENGTH<S>
-0x82 // DUP3 (0) (dstOffset)
-0x39 // CODECOPY
+PUSH2 .body.LENGTH
+PUSH1 0
+DUP2 // (CODELENGTH)
+PUSH1 .CONSTRUCTOR.LENGTH
+DUP3 //(0) (dstOffset)
+CODECOPY
 
-0x30 // address(this)
-0x61 // PUSH1 <S>body.proxy+body.proxy.PROXY_MANAGER_ADDRESS.0<S>
-0x52 // MSTORE
+ADDRESS
+PUSH2 .body.proxy+.body.proxy.PROXY_MANAGER_ADDRESS.0
+MSTORE
 
-0x30 // address(this)
-0x61 // PUSH1 <S>body.proxy+body.proxy.PROXY_MANAGER_ADDRESS.1<S>
-0x52 // MSTORE
+ADDRESS
+PUSH2 .body.proxy+.body.proxy.PROXY_MANAGER_ADDRESS.1
+MSTORE
 
-0x30 // address(this)
-0x61 // PUSH1 <S>body.proxy+body.proxy.PROXY_MANAGER_ADDRESS.2<S>
-0x52 // MSTORE
+ADDRESS
+PUSH2 .body.proxy+.body.proxy.PROXY_MANAGER_ADDRESS.2
+MSTORE
 
-0xF3 // RETURN
-END CONSTRUCTOR
+RETURN
 
-0x34 // CALLVALUE
-0x61 // <S>ERROR: NOT PAYMENT ALLOWED<S>
-0x57 // JUMPI
-0x36 // CALLDATASIZE
-0x60 // PUSH1 <S>NO CALLBACK<S>
-0x57 // JUMPI
-0x33 // CALLER
-0x54 // SLOAD (CALLER'S ADMIN)
-0x60 // PUSH1 (MEM OFFSETT)
-0x00 // 0
-0x52 // MSTORE
-0x60 // PUSH1 (RET LENGTH)
-0x20 // 32
-0x60 // PUSH1 (RET OFFSETT)
-0x00 // 0
-0xF3 // RETURN
-0x5B // JUMPDST <D>NO CALLBACK<D>
-0x60 // PUSH1
-0x00 // 0
-0x35 // CALDATALOAD
-0x60
-0xE0 // PUSH 224
-0x1C // SHR
+BODY:
+CALLVALUE
+PUSH2 .THIS.ERROR_NOT_PAYMENT_ALLOWED
+JUMPI
+CALLDATASIZE
+PUSH1 .THIS.NO_CALLBACK
+JUMPI
+CALLER
+SLOAD //(CALLER'S ADMIN)
+PUSH1 0 //(MEM OFFSETT)
+MSTORE
+PUSH1 32 //(RET LENGTH)
+PUSH1 0 //(RET OFFSETT)
+RETURN
+.NO_CALLBACK:
+JUMPDEST
+PUSH1 0
+CALLDATALOAD
+PUSH1 224
+SHR
 
+DUP1 //(FUNCTION HASH)
+PUSH4 0x64efb22b // HASH (getAdmin(address))
+EQ
+PUSH2 .this.getAdmin(address)_Function
+JUMPI
 
-0x80 // DUP1 (FUNCTION HASH)
-0x63 // PUSH4
-0x64 // HASH (getAdmin(address))
-0xef
-0xb2
-0x2b
-0x14 // EQ
-0x60 // PUSH1 <S>getAdmin(address) Function<S>
-0x57 // JUMPI
+DUP1 //(FUNCTION HASH)
+PUSH4 0x1acfd02a // HASH (changeAdmin(address,address))
+EQ
+PUSH2 .this.changeAdmin(address,address)_Function
+JUMPI
 
-0x80 // DUP1 (FUNCTION HASH)
-0x63 // PUSH4
-0x1a // HASH (changeAdmin(address,address))
-0xcf
-0xd0
-0x2a
-0x14 // EQ
-0x60 // PUSH1 <S>changeAdmin(address,address) Function<S>
-0x57 // JUMPI
+PUSH4 0x0a6eafdd // HASH (deployProxy(address,address))
+SUB
+PUSH2 .this.FUNCTION_NOT_FOUND
+JUMPI
 
-0x63 // PUSH4
-0x0a // HASH (deployProxy(address,address))
-0x6e
-0xaf
-0xdd
-0x03 // SUB
-0x61 // PUSH2 <S>FUNCTION NOT FOUND<S>
-0x57 // JUMPI
+//BEGIN deployProxy(address,address)
+PUSH2 .this.proxy.LENGTH.0
 
-0x61 // <S>proxy.LENGTH<S>
+DUP1 //(proxy.LENGTH)
+PUSH2 .this.proxy
 
-0x80 // DUP1 (proxy.LENGTH)
-0x61 // <S>proxy<S>
+PUSH1 0
+CODECOPY
+PUSH1 36
+CALLDATALOAD //(PROXY IMPL)
+
+DUP1 //(IMPLEMENTATION_ADDRESS) 
+EXTCODESIZE
+PUSH2 .THIS.IMPLEMENTATION_ADDRESS_IS_CONTRACT
+JUMPI  
+<ERROR>ERC1967: new implementation is not a contract
+.IMPLEMENTATION_ADDRESS_IS_CONTRACT:
+JUMPDEST
 
 
-0x60 // PUSH1
-0x00 // 0
-0x39 // CODECOPY
-0x60 // PUSH1
-0x24 // 34
-0x35 // CALDATALOAD (PROXY IMPL)
-0x61 // PUSH1 <S>proxy.IMPL<S>
-0x52 // MSTORE
+PUSH1 .this.proxy.IMPL.0
+MSTORE
 
-0x60 // PUSH1 (value)
-0x00 // 0
-0x80 // DUP1 (0) (offset)
-0xF0 // CREATE (NEW PROXY ADDR)
+PUSH1 0 //(value)
+DUP1 //(0) (offset)
+CREATE //(NEW PROXY ADDR)
 
-0x60 // PUSH1
-0x04 // 4
-0x35 // CALDATALOAD (PROXY ADMIN)
+PUSH1 4
+CALLDATALOAD //(PROXY ADMIN)
 
-0x80 // DUP1 (PROXY ADMIN)
-0x60 // PUSH1
-0x00 // 0
-0x52 // MSTORE
+DUP1 //(PROXY ADMIN)
+PUSH1 0
+MSTORE
 
-0x81 // DUP2 (NEW PROXY ADDR)
+DUP2 // (NEW PROXY ADDR)
 
-0x55 // SSTORE
-0x80 // DUP1 (NEW PROXY ADDR)
+SSTORE
+DUP1 //(NEW PROXY ADDR)
 
+PUSH32 0x4eb572e99196bed0270fbd5b17a948e19c3f50a97838cb0d2a75a823ff8e6c50 // AdminChanged
 
+PUSH1 64
+PUSH1 0
+LOG2
 
-0x7F // PUSH32
-0x4e // AdminChanged
-0xb5
-0x72
-0xe9
-0x91
-0x96
-0xbe
-0xd0
-0x27
-0x0f
-0xbd
-0x5b
-0x17
-0xa9
-0x48
-0xe1
-0x9c
-0x3f
-0x50
-0xa9
-0x78
-0x38
-0xcb
-0x0d
-0x2a
-0x75
-0xa8
-0x23
-0xff
-0x8e
-0x6c
-0x50
+PUSH1 0
+MSTORE
 
-0x60 // PUSH1
-0x40 // 64
-0x60 // PUSH1
-0x00 // 0
-0xA2 // LOG2
+PUSH1 32
+PUSH1 0
+RETURN
 
-0x60 // PUSH1
-0x00 // 0
-0x52 // MSTORE
+.getAdmin(address)_Function:
+JUMPDEST
+PUSH1 4
+CALLDATALOAD
+SLOAD //(CONTRACT'S ADMIN)
+PUSH1 0 //(MEM OFFSETT)
+MSTORE
+PUSH1 32 //(RET LENGTH)
+PUSH1 0 //(RET OFFSETT)
+RETURN
 
-0x60 // PUSH1 
-0x20 // 32
-0x60 // PUSH1 
-0x00 // 0
-0xF3 // RETURN
+.changeAdmin(address,address)_Function:
+JUMPDEST
+PUSH1 0x24
+CALLDATALOAD //(NEW ADMIN ADDR) (SSTORE VALUE)
 
-0x5B // JUMPDST <D>getAdmin(address) Function<D>
-0x60 // PUSH1
-0x04 // 4
-0x35 // CALDATALOAD
-0x54 // SLOAD (CONTRACT'S ADMIN)
-0x60 // PUSH1 (MEM OFFSETT)
-0x00 // 0
-0x52 // MSTORE
-0x60 // PUSH1 (RET LENGTH)
-0x20 // 32
-0x60 // PUSH1 (RET OFFSETT)
-0x00 // 0
-0xF3 // RETURN
+DUP1 //(CONTRACT ADDR)
+PUSH1 32
+MSTORE
 
-0x5B // JUMPDST <D>changeAdmin(address,address) Function<D>
-0x60 // PUSH1
-0x24 // 34
-0x35 // CALDATALOAD (NEW ADMIN ADDR) (SSTORE VALUE)
+PUSH1 4
+CALLDATALOAD //(CONTRACT ADDR) (SSTORE KEY)
+DUP1 //(CONTRACT ADDR)
 
-0x80 // DUP1 (CONTRACT ADDR)
-0x60 // PUSH1
-0x20 // 32
-0x52 // MSTORE
-
-0x60 // PUSH1
-0x04 // 4
-0x35 // CALDATALOAD (CONTRACT ADDR) (SSTORE KEY)
-0x80 // DUP1 (CONTRACT ADDR)
-
-0x54 // SLOAD (ACTUAL ADMIN)
-0x80 // DUP1 (ACTUAL ADMIN)
-0x61 // <S>changeAdmin - Proxy is registered<S>
-0x57 // JUMPI
+SLOAD //(ACTUAL ADMIN)
+DUP1 //(ACTUAL ADMIN)
+PUSH2 .this.changeAdmin_Proxy_is_registered
+JUMPI
 <ERROR>Proxy not registered.
-0x5B // JUMPDST <D>changeAdmin - Proxy is registered<D>
-0x33 // SENDER
-0x03 // SUB
-0x61 // PUSH1 <S>changeAdmin - Caller is not the actual admin<S>
-0x57 // JUMPI
+.changeAdmin_Proxy_is_registered:
+JUMPDEST
+CALLER
+SUB
+PUSH2 .THIS.changeAdmin_Caller_is_not_the_actual_admin
+JUMPI
 
-0x55 // SSTORE
+SSTORE
 
-0x33 // SENDER
-0x60 // PUSH1
-0x00 // 0
-0x52 // MSTORE
+CALLER
+PUSH1 0
+MSTORE
 
-0x60 // PUSH1
-0x04 // 4
-0x35 // CALDATALOAD (CONTRACT ADDR)
+PUSH1 4
+CALLDATALOAD //(CONTRACT ADDR)
 
-0x7F // PUSH32
-0x4e // AdminChanged
-0xb5
-0x72
-0xe9
-0x91
-0x96
-0xbe
-0xd0
-0x27
-0x0f
-0xbd
-0x5b
-0x17
-0xa9
-0x48
-0xe1
-0x9c
-0x3f
-0x50
-0xa9
-0x78
-0x38
-0xcb
-0x0d
-0x2a
-0x75
-0xa8
-0x23
-0xff
-0x8e
-0x6c
-0x50
-0x60 // PUSH1
-0x40 // 64
-0x60 // PUSH1
-0x00 
-0xA2 // LOG2
-0x00 // STOP
-0x5B // JUMPDST <D>changeAdmin - Caller is not the actual admin<D>
+PUSH32 0x4eb572e99196bed0270fbd5b17a948e19c3f50a97838cb0d2a75a823ff8e6c50 // AdminChanged
+PUSH1 64
+PUSH1 0 
+LOG2
+STOP
+.changeAdmin_Caller_is_not_the_actual_admin:
+JUMPDEST
 <ERROR>Caller is not the actual admin.
-0x5B // JUMPDST <D>FUNCTION NOT FOUND<D>
+.FUNCTION_NOT_FOUND:
+JUMPDEST
 <ERROR>FUNCTION NOT FOUND.
-0x5B // JUMPDST <D>ERROR: NOT PAYMENT ALLOWED<D>
+.ERROR_NOT_PAYMENT_ALLOWED:
+JUMPDEST
 <ERROR>NOT PAYMENT ALLOWED
-<IMPORT>./assemblyCodeDelta proxy
+<IMPORT> ./assemblyCodeDelta proxy
