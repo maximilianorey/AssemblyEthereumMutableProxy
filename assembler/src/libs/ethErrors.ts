@@ -43,8 +43,9 @@ function numberToHexString(index: number, size?: number){
 export function generateError(errorText: string,index:number,hardhat2Compatibility:boolean){
 	const errorHex = Buffer.from(errorText).toString("hex");
 	const errorBuff: Array<string> = [];
+	errorBuff.push("08c379a0");
 	if(hardhat2Compatibility){
-		errorBuff.push("08c379a00000000000000000000000000000000000000000000000000000000000000020");
+		errorBuff.push("0000000000000000000000000000000000000000000000000000000000000020");
 		errorBuff.push(numberToHexString(errorHex.length/2,32));
 		errorBuff.push(errorHex);
 		const noAlignedSize = 36 + 32 + errorHex.length/2;
@@ -52,7 +53,6 @@ export function generateError(errorText: string,index:number,hardhat2Compatibili
 			errorBuff.push("".padStart((32 - ((noAlignedSize - 4) % 32))*2,"0"));
 		}
 	}else{
-		errorBuff.push("08c379a0");
 		const errorLength = numberToHexString(errorHex.length/2);
 		errorBuff.push(numberToHexString(errorLength.length/2,32));
 		errorBuff.push(errorLength);
@@ -62,10 +62,11 @@ export function generateError(errorText: string,index:number,hardhat2Compatibili
 	const m1 = errorBuff.join("");
 
 	const errorLength = errorHex.length/2;
+	const errorLengthSize =  calculateSize(errorLength);
 	const messageLength = m1.length/2;
-	const newIndexLength = calculateSize(index + 8 + calculateSize(errorLength) + 32 + messageLength);
+	const newIndexLength = calculateSize(index + 8 + errorLengthSize + 32 + messageLength);
 
-	const newIndex = index + 8 + calculateSize(errorLength) + newIndexLength;
+	const newIndex = index + 8 + errorLengthSize + newIndexLength;
 
 	const res: Array<string> = [];
 	res.push(numberToHexString(0x60 + calculateSize(messageLength) - 1));

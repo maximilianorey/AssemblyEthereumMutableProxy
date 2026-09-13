@@ -1,19 +1,18 @@
 {
     "compilerOptions": {
-      "lib": ["ES2024"],
-      "moduleResolution": "NodeNext",
+      "lib": ["ES2023"],
+      "moduleResolution": "node",
   
       "esModuleInterop": true,
       "forceConsistentCasingInFileNames": true,
-      "module": "NodeNext",
+      "module": "commonjs",
       "outDir": "./dist",
       "rootDir": "./src",
       "skipLibCheck": true,
       "strict": true,
       "resolveJsonModule": true,
-      "target": "ES2024",
-      "noImplicitAny": false,
-      "noErrorTruncation": true
+      "target": "ES2023",
+      "noImplicitAny": false
     },
     "include": [
       "./src/**/*.ts",

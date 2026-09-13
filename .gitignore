@@ -1,8 +1,9 @@
 .env
-artifacts
 cache
-contractsDirections.json
 dist
 node_modules
 out
-src/typechain
+src/out
+testnets.json
+lib/forge-std
+tsconfig.tsbuildinfo

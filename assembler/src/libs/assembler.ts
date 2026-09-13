@@ -302,6 +302,6 @@ export function fromTemplate(binary: AssemblyReturn, inputPath: string,outputPat
 			template[ i ] = `[${paramValue.map(x => x.toString(10)).join(",")}]`;
 		}
 	}
-	fs.writeFileSync(outputPath,template.join("").replace("<BINARYCODE>",binary.binaryCode));
+	fs.writeFileSync(outputPath,template.join("").replaceAll("<BINARYCODE>",binary.binaryCode));
 
 }

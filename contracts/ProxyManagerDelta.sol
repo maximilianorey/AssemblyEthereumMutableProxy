@@ -5,6 +5,7 @@ import "./AssemblyProxyDelta.sol";
 
 interface ProxyManagerDelta{
     event AdminChanged(address indexed contractAddress, address previousAdmin, address newAdmin);
+    event NewProxy(address indexed contractAddress, address indexed newAdmin, address indexed implementation);
 
     function getAdmin(address contractAddress) external view returns(address);
 
