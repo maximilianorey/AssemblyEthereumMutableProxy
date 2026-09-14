@@ -6,25 +6,37 @@ import "../contracts/ProxyManagerEpsilon.sol";
 import "./utils/ProxyManagerEpsilonPayable.sol";
 import "../contracts/ERC20Imp.sol";
 import "../contracts/ERC20Imp_2.sol";
+import "./SlotOverriter.sol";
 
 contract ProxyEpsilonTest is Test {
-    function test_epsilon() public {
+    address immutable private proxyManagerAddress;
+
+    constructor(){
         bytes memory bytecode = hex"<BINARYCODE>";
         uint256 codelength = bytecode.length;
-        address targetContract;
+        address newContract;
         assembly {
-            targetContract := create(0,add(bytecode,32),codelength)
+            newContract := create(0,add(bytecode,32),codelength)
         }
-        
-        
+        proxyManagerAddress = newContract;
+    }
+    
+    function test_epsilon() public {
         ERC20Imp erc20_1 = new ERC20Imp();
 
-        ProxyManagerEpsilon manager = ProxyManagerEpsilon(targetContract);
+        ProxyManagerEpsilon manager = ProxyManagerEpsilon(proxyManagerAddress);
 
         try manager.deployProxy(address(this),address(1)){
             require(false,"SHOULD FAIL IF INITIAL IMPLEMENTATION IS NOT A CONTRACT");
-        }catch Error(string memory error_str) {
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("ERC1967: new implementation is not a contract")),"INVALID ERROR MESSAGE IF INITIAL IMPLEMENTATION IS NOT A CONTRACT");
+        }catch (bytes memory err) {
+            require(err.length==36,"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
+            uint256 code;
+            address errorAddr;
+            assembly {
+                code := shr(224,mload(add(err,32)))
+                errorAddr := mload(add(err,36))
+            }
+            require(code==0xcb06ac21 && errorAddr==address(1),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
         }
 
         ERC20Imp proxy = ERC20Imp(manager.deployProxy(address(this),address(erc20_1)));
@@ -38,8 +50,15 @@ contract ProxyEpsilonTest is Test {
         ERC20Imp_2 erc20_2 = new ERC20Imp_2();
         try manager.upgradeTo(address(proxy), address(1)){
             require(false,"SHOULD FAIL IF NEW IMPLEMENTATION IS NOT A CONTRACT");
-        }catch Error(string memory error_str) {
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("ERC1967: new implementation is not a contract")),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
+        }catch (bytes memory err) {
+            require(err.length==36,"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
+            uint256 code;
+            address errorAddr;
+            assembly {
+                code := shr(224,mload(add(err,32)))
+                errorAddr := mload(add(err,36))
+            }
+            require(code==0xcb06ac21 && errorAddr==address(1),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
         }
         manager.upgradeTo(address(proxy), address(erc20_2));
         require(manager.getImplementation(address(proxy))==address(erc20_2),"FAILS ON ADMIN GETTER ON NEW ADDRESS");
@@ -51,52 +70,113 @@ contract ProxyEpsilonTest is Test {
         manager.changeAdmin(address(proxy),address(1));
         require(manager.getAdmin(address(proxy))==address(1),"FAILS ON ADMIN GETTER ON NEW ADDRESS");
 
+        try manager.changeAdmin(address(proxy),address(2)){
+            require(false,"SHOULD FAIL IF NOT ADMIN");
+        }catch(bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET CHANGE ADMIN");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x8dfa73db,"WRONG ERROR MESSAGE ON GET CHANGE ADMIN");
+        }
     }
 
     function test_not_payable_error() public{
-        address targetContract;
-        bytes memory bytecode = hex"<BINARYCODE>";
-        uint256 codelength = bytecode.length;
-        assembly {
-            targetContract := create(0,add(bytecode,32),codelength)
-        }
-        
-        
         ERC20Imp erc20_1 = new ERC20Imp();
 
-        ProxyManagerEpsilonPayable manager = ProxyManagerEpsilonPayable(targetContract);
+        ProxyManagerEpsilonPayable manager = ProxyManagerEpsilonPayable(proxyManagerAddress);
 
 
         try manager.deployProxy{value:12}(address(this),address(erc20_1)){
             require(false,"DEPLOY NEW PROXY SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON DEPLOY NEW PROXY WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
 
         address proxy = manager.deployProxy(address(this),address(erc20_1));
         try manager.getAdmin{value: 12}(proxy){
             require(false,"GET IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
 
         try manager.getImplementation{value: 12}(proxy){
             require(false,"GET PROXY_MANAGER SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON GET PROXY_MANAGER WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
 
         try manager.changeAdmin{value: 12}(proxy,address(1)){
             require(false,"CHANGE ADMIN SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON CHANGE ADMIN WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
 
         ERC20Imp_2 erc20_2 = new ERC20Imp_2();
         try manager.upgradeTo{value: 12}(proxy,address(erc20_2)){
             require(false,"CHANGE IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON CHANGE IMPLEMENTATION WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+        }
+    }
+
+    function test_not_found_proxy() public{
+        ProxyManagerEpsilon manager = ProxyManagerEpsilon(proxyManagerAddress);
+        try manager.changeAdmin(address(1),address(2)){
+            require(false,"SHOULD FAIL IF TARGET PROXY DON'T EXISTS");
+        }catch(bytes memory err){
+            require(err.length==36,"WWWWRONG ERROR MESSAGE ON TARGET PROXY DON'T EXISTS");
+            uint256 code;
+            address errorAddr;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+                errorAddr := mload(add(err,36))
+
+            }
+            require(code==0x6c72629e,"WRONG ERROR MESSAGE ON TARGET PROXY DON'T EXISTS");
+        }
+    }
+
+    function test_corrupted_register_detection() public{
+        SlotOverriter overriter = new SlotOverriter();
+        ProxyManagerEpsilon manager = ProxyManagerEpsilon(proxyManagerAddress);
+        SlotOverriter proxy = SlotOverriter(address(manager.deployProxy(address(this),address(overriter))));
+        ERC20Imp erc20_1 = new ERC20Imp();
+        try proxy.tryToCorruptProxyImplmentation(address(erc20_1)){
+            require(false,"SHOULD DETECRT IMPLEMENTATION SLOT CORRUPTION");
+        }catch (bytes memory err) {
+            require(err.length==4,"INVALID ERROR MESSAGE ON IMPLEMENTATION SLOT CORRUPTION");
+            uint256 code;
+            assembly {
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x36346895,"INVALID ERROR MESSAGE ON IMPLEMENTATION SLOT CORRUPTION");
         }
     }
 }

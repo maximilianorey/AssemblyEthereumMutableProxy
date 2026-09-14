@@ -5,6 +5,11 @@ interface AssemblyProxyDelta{
     enum AdminFuctionGetType{ IMPLEMENTATION, PROXY_MANAGER }
     event Upgraded(address indexed implementation);
 
+    error AddressIsNotAContract(address implementation);
+    error CorruptedRegisters();
+    error NotPaymentAllowed();
+    
+
     function adminFunctionsGet(AdminFuctionGetType func) external view returns (address);
     
     function upgradeTo(address newImplementation) external;

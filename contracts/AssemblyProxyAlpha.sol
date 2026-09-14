@@ -4,6 +4,9 @@ pragma solidity ^0.8.26;
 interface AssemblyProxyAlpha{
     event AdminChanged(address previousAdmin, address newAdmin);
     event Upgraded(address indexed implementation);
+    error AddressIsNotAContract(address implementation);
+    error CorruptedRegisters();
+    error NotPaymentAllowed();
     
     function implementation() external view returns(address);
 

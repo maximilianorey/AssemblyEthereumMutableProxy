@@ -6,6 +6,9 @@ interface AssemblyProxyBeta{
     
     event AdminChanged(address previousAdmin, address newAdmin);
     event Upgraded(address indexed implementation);
+
+    error CorruptedRegisters();
+    error NotPaymentAllowed();
     
     function implementation() external view returns (address);
     

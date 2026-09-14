@@ -6,6 +6,12 @@ interface ProxyManagerEpsilon{
     event Upgraded(address indexed contractAddress, address indexed implementation);
     event NewProxy(address indexed contractAddress, address indexed newAdmin, address indexed implementation);
 
+    error AddressIsNotAContract(address implementation);
+    error NotPaymentAllowed();
+    error CallerIsNotAdmin();
+    error ProxyNotRegistered(address proxy);
+    error NotValidFunction(bytes4 functionId);
+
     function getAdmin(address contractAddress) external view returns(address);
     
     function getImplementation(address contractAddress) external view returns(address);

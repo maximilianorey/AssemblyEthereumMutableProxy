@@ -38,8 +38,15 @@ contract ProxyBetaTest is Test {
 
         try proxyAsAdmin.adminFunctionsPut(AssemblyProxyBeta.AdminFuctionPutType.UPGRADETO,address(1)){
             require(false,"SHOULD FAIL IF NEW IMPLEMENTATION IS NOT A CONTRACT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("ERC1967: new implementation is not a contract")),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
+        }catch (bytes memory err) {
+            require(err.length==36,"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
+            uint256 code;
+            address errorAddr;
+            assembly {
+                code := shr(224,mload(add(err,32)))
+                errorAddr := mload(add(err,36))
+            }
+            require(code==0xcb06ac21 && errorAddr==address(1),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
         }
 
         proxyAsAdmin.adminFunctionsPut(AssemblyProxyBeta.AdminFuctionPutType.UPGRADETO,address(erc20_2));
@@ -70,21 +77,36 @@ contract ProxyBetaTest is Test {
         AssemblyProxyBetaPayable proxy = AssemblyProxyBetaPayable(targetContract);
         try proxy.implementation{value: 12}(){
             require(false,"GET IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
 
         try proxy.adminFunctionsPut{value: 12}(AssemblyProxyBeta.AdminFuctionPutType.CHANGEADMIN,address(1)){
             require(false,"CHANGE ADMIN SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str) {
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON CHANGE ADMIN WITH PAYMENT");
+        }catch (bytes memory err) {
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
             
         }
         ERC20Imp_2 erc20_2 = new ERC20Imp_2();
         try proxy.adminFunctionsPut{value: 12}(AssemblyProxyBeta.AdminFuctionPutType.UPGRADETO,address(erc20_2)){
             require(false,"CHANGE IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON CHANGE IMPLEMENTATION WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
     }
 }

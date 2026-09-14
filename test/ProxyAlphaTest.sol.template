@@ -6,6 +6,7 @@ import "../contracts/AssemblyProxyAlpha.sol";
 import "./utils/AssemblyProxyAlphaPayable.sol";
 import "../contracts/ERC20Imp.sol";
 import "../contracts/ERC20Imp_2.sol";
+import "./SlotOverriter.sol";
 
 contract ProxyAlphaTest is Test {
     function test_alpha() public {
@@ -38,8 +39,15 @@ contract ProxyAlphaTest is Test {
         ERC20Imp_2 erc20_2 = new ERC20Imp_2();
         try proxyAsAdmin.upgradeTo(address(1)){
             require(false,"SHOULD FAIL IF NEW IMPLEMENTATION IS NOT A CONTRACT");
-        }catch Error(string memory error_str) {
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("ERC1967: new implementation is not a contract")),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
+        }catch (bytes memory err) {
+            require(err.length==36,"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
+            uint256 code;
+            address errorAddr;
+            assembly {
+                code := shr(224,mload(add(err,32)))
+                errorAddr := mload(add(err,36))
+            }
+            require(code==0xcb06ac21 && errorAddr==address(1),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
         }
         proxyAsAdmin.upgradeTo(address(erc20_2));
         require(proxyAsAdmin.implementation()==address(erc20_2),"WRONG IMPLEMENTATION GETTER ON NEW ADDRESS");
@@ -70,21 +78,70 @@ contract ProxyAlphaTest is Test {
 
         try proxy.implementation{value: 12}(){
             require(false,"GET IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
 
         try proxy.changeAdmin{value: 12}(address(1)){
             require(false,"CHANGE ADMIN SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str) {
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON CHANGE ADMIN WITH PAYMENT");
+        }catch (bytes memory err) {
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
             
         }
         ERC20Imp_2 erc20_2 = new ERC20Imp_2();
         try proxy.upgradeTo{value: 12}(address(erc20_2)){
             require(false,"CHANGE IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
-        }catch Error(string memory error_str){
-            require(keccak256(abi.encodePacked(error_str)) ==keccak256(abi.encodePacked("NOT PAYMENT ALLOWED")),"WRONG ERROR MESSAGE ON CHANGE IMPLEMENTATION WITH PAYMENT");
+        }catch (bytes memory err){
+            require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            uint256 code;
+            assembly{
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+        }
+    }
+
+    function test_corrupted_register_detection() public{
+        SlotOverriter overriter = new SlotOverriter();
+        bytes memory bytecode = hex"<BINARYCODE>";
+        uint256 codelength = bytecode.length;
+        address targetContract;
+        assembly {
+            mstore(add(bytecode,add(32,<P>ADMIN.0<P>)),address())
+            mstore(add(bytecode,add(32,<P>IMPL.0<P>)),overriter)
+            targetContract := create(0,add(bytecode,32),codelength)
+        }
+        SlotOverriter proxy = SlotOverriter(targetContract);
+        try proxy.tryToCorruptProxyAdmin(address(2)){
+            require(false,"SHOULD DETECRT ADMIN SLOT CORRUPTION");
+        }catch (bytes memory err) {
+            require(err.length==4,"INVALID ERROR MESSAGE ON ADMIN SLOT CORRUPTION");
+            uint256 code;
+            assembly {
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x36346895,"INVALID ERROR MESSAGE ON ADMIN SLOT CORRUPTION");
+        }
+        ERC20Imp erc20_1 = new ERC20Imp();
+        try proxy.tryToCorruptProxyImplmentation(address(erc20_1)){
+            require(false,"SHOULD DETECRT IMPLEMENTATION SLOT CORRUPTION");
+        }catch (bytes memory err) {
+            require(err.length==4,"INVALID ERROR MESSAGE ON IMPLEMENTATION SLOT CORRUPTION");
+            uint256 code;
+            assembly {
+                code := shr(224,mload(add(err,32)))
+            }
+            require(code==0x36346895,"INVALID ERROR MESSAGE ON IMPLEMENTATION SLOT CORRUPTION");
         }
     }
 }
