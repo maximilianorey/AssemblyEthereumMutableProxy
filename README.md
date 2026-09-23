@@ -52,6 +52,11 @@ Any "enum" type is considered as an "uint8"
 
 Also, latest hardhat version only allow that second parameter was 32 (and third parameter a 32-byte-length value).
 
+- Or, if you use a custom error on a revert:
+1. First the message should start with 0x08c379a0
+2. Second the first four bytes of the Keccak-256 of the error's id (for example "name(type1,type2,...) " )
+3. The error's parameters
+
 # Compilation
 First, to compile the assembler, open a terminal on assembler folder ans:
 1. Execute "npm i"
