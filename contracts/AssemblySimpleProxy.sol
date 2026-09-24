@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-interface AssemblyProxyBeta{
+interface AssemblySimpleProxy{
     enum AdminFuctionPutType{ UPGRADETO, CHANGEADMIN }
     
     event AdminChanged(address previousAdmin, address newAdmin);
@@ -9,6 +9,7 @@ interface AssemblyProxyBeta{
 
     error CorruptedRegisters();
     error NotPaymentAllowed();
+    error AddressIsNotAContract(address implementation);
     
     function implementation() external view returns (address);
     

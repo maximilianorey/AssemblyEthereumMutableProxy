@@ -8,9 +8,7 @@ import {
 	ContractFunctionArgs,
 	ContractFunctionName,
 	EstimateGasReturnType,
-	parseEther
 } from "viem";
-
 
 export class ContractInstance<
   TAbi extends Abi,
@@ -19,9 +17,9 @@ export class ContractInstance<
 		return {
 			execute: async (
 				args: ContractFunctionArgs<TAbi,P,FName>,
-				value?: P extends "payable" ? `${number}` : undefined
+				value?: P extends "payable" ? bigint : undefined
 			): Promise<{ receipt: TransactionReceipt,events: ParseEventLogsReturnType<TAbi,undefined,true> }> => {
-				const executionsArgs = {
+				const executionsArgs =  {
 					abi: this.abi as Abi,
 					functionName: name,
 					address: this.contractAddress,
@@ -30,8 +28,8 @@ export class ContractInstance<
 					args: args as Array<unknown>
 				} as const;
 
-				if(value){
-					Object.assign(executionsArgs,{ value: parseEther(value) });
+				if(value!==undefined){
+					Object.assign(executionsArgs,{ value });
 				}
 
 				await this.publicClient.simulateContract(executionsArgs);
@@ -64,9 +62,9 @@ export class ContractInstance<
 		};
 	}
 
-	getView<FName extends ContractFunctionName<TAbi,"pure" | "view">>(name: FName) {
+	getView<P extends "pure" | "view",FName extends ContractFunctionName<TAbi,P>>(name: FName) {
 		return (
-			args: ContractFunctionArgs<TAbi,"pure" | "view",FName>
+			args: ContractFunctionArgs<TAbi,P,FName>
 		) => {
 			return this.publicClient.readContract({
 				abi: this.abi,
