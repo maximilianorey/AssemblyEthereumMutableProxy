@@ -2,8 +2,8 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
-import "../contracts/AssemblyProxyBeta.sol";
-import "./utils/AssemblyProxyBetaPayable.sol";
+import "../contracts/AssemblySimpleProxy.sol";
+import "./utils/AssemblySimpleProxyPayable.sol";
 import "../contracts/ERC20Imp.sol";
 import "../contracts/ERC20Imp_2.sol";
 
@@ -26,7 +26,7 @@ contract ProxyBetaTest is Test {
             targetContract := create(0,add(bytecode,32),codelength)
         }
 
-        AssemblyProxyBeta proxyAsAdmin = AssemblyProxyBeta(targetContract);
+        AssemblySimpleProxy proxyAsAdmin = AssemblySimpleProxy(targetContract);
         ERC20Imp proxy = ERC20Imp(address(proxyAsAdmin));
 
         proxy.mint(address(this),400);
@@ -36,7 +36,7 @@ contract ProxyBetaTest is Test {
         require(proxyAsAdmin.implementation()==address(erc20_1),"WRONG IMPLEMENTATION GETTER");
         ERC20Imp_2 erc20_2 = new ERC20Imp_2();
 
-        try proxyAsAdmin.adminFunctionsPut(AssemblyProxyBeta.AdminFuctionPutType.UPGRADETO,address(1)){
+        try proxyAsAdmin.adminFunctionsPut(AssemblySimpleProxy.AdminFuctionPutType.UPGRADETO,address(1)){
             require(false,"SHOULD FAIL IF NEW IMPLEMENTATION IS NOT A CONTRACT");
         }catch (bytes memory err) {
             require(err.length==36,"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
@@ -49,14 +49,14 @@ contract ProxyBetaTest is Test {
             require(code==0xcb06ac21 && errorAddr==address(1),"INVALID ERROR MESSAGE IF NEW IMPLEMENTATION IS NOT A CONTRACT");
         }
 
-        proxyAsAdmin.adminFunctionsPut(AssemblyProxyBeta.AdminFuctionPutType.UPGRADETO,address(erc20_2));
+        proxyAsAdmin.adminFunctionsPut(AssemblySimpleProxy.AdminFuctionPutType.UPGRADETO,address(erc20_2));
         require(proxyAsAdmin.implementation()==address(erc20_2),"WRONG IMPLEMENTATION GETTER ON NEW ADDRESS");
 
         proxy.mint(address(this),400);
         require(keccak256(abi.encodePacked(proxy.something()))==keccak256(abi.encodePacked("ANOTHER NAME")),"FAILS ON NEW IMPLEMENTATION");
         require(proxy.balanceOf(address(this))==800,"FAILS BALANCE ON NEW IMPLEMENTATION");
 
-        proxyAsAdmin.adminFunctionsPut(AssemblyProxyBeta.AdminFuctionPutType.CHANGEADMIN,address(1));
+        proxyAsAdmin.adminFunctionsPut(AssemblySimpleProxy.AdminFuctionPutType.CHANGEADMIN,address(1));
 
         proxy.mint(address(this),400);
         require(keccak256(abi.encodePacked(proxy.something()))==keccak256(abi.encodePacked("ANOTHER NAME")),"FAILS ON NEW IMPLEMENTATION");
@@ -74,7 +74,7 @@ contract ProxyBetaTest is Test {
             mstore(add(bytecode,100),erc20_1)
             targetContract := create(0,add(bytecode,32),codelength)
         }
-        AssemblyProxyBetaPayable proxy = AssemblyProxyBetaPayable(targetContract);
+        AssemblySimpleProxyPayable proxy = AssemblySimpleProxyPayable(targetContract);
         try proxy.implementation{value: 12}(){
             require(false,"GET IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
         }catch (bytes memory err){
@@ -83,10 +83,10 @@ contract ProxyBetaTest is Test {
             assembly{
                 code := shr(224,mload(add(err,32)))
             }
-            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            require(code==0xe9b46746,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
 
-        try proxy.adminFunctionsPut{value: 12}(AssemblyProxyBeta.AdminFuctionPutType.CHANGEADMIN,address(1)){
+        try proxy.adminFunctionsPut{value: 12}(AssemblySimpleProxy.AdminFuctionPutType.CHANGEADMIN,address(1)){
             require(false,"CHANGE ADMIN SHOULD FAIL WITH PAYMENT");
         }catch (bytes memory err) {
             require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
@@ -94,11 +94,11 @@ contract ProxyBetaTest is Test {
             assembly{
                 code := shr(224,mload(add(err,32)))
             }
-            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            require(code==0xe9b46746,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
             
         }
         ERC20Imp_2 erc20_2 = new ERC20Imp_2();
-        try proxy.adminFunctionsPut{value: 12}(AssemblyProxyBeta.AdminFuctionPutType.UPGRADETO,address(erc20_2)){
+        try proxy.adminFunctionsPut{value: 12}(AssemblySimpleProxy.AdminFuctionPutType.UPGRADETO,address(erc20_2)){
             require(false,"CHANGE IMPLEMENTATION SHOULD FAIL WITH PAYMENT");
         }catch (bytes memory err){
             require(err.length==4,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
@@ -106,7 +106,7 @@ contract ProxyBetaTest is Test {
             assembly{
                 code := shr(224,mload(add(err,32)))
             }
-            require(code==0x4e7254d6,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
+            require(code==0xe9b46746,"WRONG ERROR MESSAGE ON GET IMPLEMENTATION WITH PAYMENT");
         }
     }
 }

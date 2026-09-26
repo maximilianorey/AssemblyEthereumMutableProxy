@@ -4,8 +4,8 @@ import { opcodes } from "./opcodes";
 import { generateError } from "./ethErrors";
 import { dirname } from "path";
 
-export type NotImportIndexType = {isImport: false, index: number};
-export type ImportIndexType = {isImport: true, index:number,data: AssemblyReturn};
+export type NotImportIndexType = { isImport: false, index: number };
+export type ImportIndexType = { isImport: true, index:number,data: AssemblyReturn };
 export type IndexType = NotImportIndexType | ImportIndexType;
 
 export type Labels = {
@@ -32,13 +32,13 @@ export type AssemblyReturn = {
 	params: Map<string,Array<number>>,
 }
 
-function processPushAttr(rawAttrs: string,labels: Labels,mapLabels: Map<string, IndexType>,contructorLength: number): {isError: false, index: bigint} | {isError: true, message: string}{
+function processPushAttr(rawAttrs: string,labels: Labels,mapLabels: Map<string, IndexType>,contructorLength: number): { isError: false, index: bigint } | { isError: true, message: string }{
 	if(rawAttrs.startsWith("-")){
 		return { isError: false, index: BigInt(0) };
 	}
 
 
-	return rawAttrs.split("+").reduce<{isError: false, index: bigint} | {isError: true, message: string}>((acum,rawAttr) => {
+	return rawAttrs.split("+").reduce<{ isError: false, index: bigint } | { isError: true, message: string }>((acum,rawAttr) => {
 		if(acum.isError){
 			return acum;
 		}

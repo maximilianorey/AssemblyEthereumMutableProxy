@@ -7,8 +7,16 @@ import {
 } from "viem";
 
 import { ContractInstance } from "./ContractInstance.js";
-import { transforIntoBigInt } from "./utils.js";
 
+function transforIntoBigInt(input: bigint | string | Array<number>): bigint{
+	if(typeof input ==="bigint"){
+		return input;
+	}
+	if(typeof input ==="string" && input.startsWith("0x")){
+		return BigInt(input);
+	}
+	return BigInt(`0x${Buffer.from(input).toString("hex")}`);
+}
 
 function reeplaceOnBytecode(bytecode: `0x${string}`,args: Array<bigint>,fromAssemblyConstructors: readonly (readonly { index: number, size: number }[])[]): `0x${string}`{
 	let res = bytecode;
@@ -59,24 +67,3 @@ export class ContractFactory<
 
 	constructor(private abi: TAbi, private bytecode: `0x${string}`,private fromAssemblyConstructors?: readonly (readonly { index: number, size: number }[])[]){}
 }
-
-/*
-const factory = new ContractFactory(BasicProxy.abi,BasicProxy.bytecode.object);
-
-
-
-const test:ResolveTypeArray<[{type: "address"},{type: "bytes2"},{type: "string"}]> = [
-	"0x18",
-	[ 12,12 ],
-	"HELLO",
-	"ddd"
-];
-
-const test:ResolveTypeArray<typeof BasicProxy["constructor"]> = [
-	"0x18",
-	"0x18",
-];
-
-const params: DeployContractParameters<TAbi, undefined, undefined, undefined>{
-
-}*/

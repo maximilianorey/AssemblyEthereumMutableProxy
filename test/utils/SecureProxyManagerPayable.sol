@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-interface ProxyManagerEpsilonPayable{
+interface SecureProxyManagerPayable{
     function getAdmin(address contractAddress) external payable returns(address);
     
     function getImplementation(address contractAddress) external payable returns(address);

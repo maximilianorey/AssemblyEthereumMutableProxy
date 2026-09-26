@@ -4,11 +4,8 @@ import { createWalletClient, createPublicClient, EstimateGasReturnType, WaitForT
 import { hdkey } from "@ethereumjs/wallet";
 import { privateKeyToAccount } from "viem/accounts";
 
-import AssemblyProxyAlphaJson from "../out/AssemblyProxyAlpha.sol/AssemblyProxyAlpha.js";
-import AssemblyProxyBetaJson from "../out/AssemblyProxyBeta.sol/AssemblyProxyBeta.js";
-import AssemblyProxyDeltaJson from "../out/AssemblyProxyDelta.sol/AssemblyProxyDelta.js";
-import ProxyManagerDeltaJson from "../out/ProxyManagerDelta.sol/ProxyManagerDelta.js";
-import ProxyManagerEpsilonJson from "../out/ProxyManagerEpsilon.sol/ProxyManagerEpsilon.js";
+import SimpleProxyJson from "../out/AssemblySimpleProxy.sol/AssemblySimpleProxy.js";
+import SecureProxyManagerJson from "../out/SecureProxyManager.sol/SecureProxyManager.js";
 import Erc20Json from "../out/ERC20Imp.sol/ERC20Imp.js";
 import Erc20_2Json from "../out/ERC20Imp_2.sol/ERC20Imp_2.js";
 import BasicProxyJson from "../out/BasicProxy.sol/BasicProxy.js";
@@ -75,141 +72,84 @@ async function runOne(name: string, mnemonic: string, nodeUrl: string) {
 			]
 		);
 
-		res += "\nDEPLOYING PROXY ALPHA";
-		const proxyRootAlpha = await new ContractFactory(AssemblyProxyAlphaJson.abi,AssemblyProxyAlphaJson.bytecode.object,AssemblyProxyAlphaJson.fromAssemblyConstructors).deploy(wallet0,publicClient, [ wallet1Addr, erc20Addr ]);
-		res += "\nDEPLOYING PROXY BETA";
-		const proxyRootBeta = await new ContractFactory(AssemblyProxyBetaJson.abi,AssemblyProxyBetaJson.bytecode.object,AssemblyProxyBetaJson.fromAssemblyConstructors).deploy(wallet0,publicClient,[ wallet1Addr, erc20Addr ]);
+		res += "\nDEPLOYING PROXY SIMPLE";
+		const proxyRootSimple = await new ContractFactory(SimpleProxyJson.abi,SimpleProxyJson.bytecode.object,SimpleProxyJson.fromAssemblyConstructors).deploy(wallet0,publicClient,[ wallet1Addr, erc20Addr ]);
 
-		res += "\nDEPLOYING PROXY MANAGER DELTA";
-		const proxyManagerDelta = await new ContractFactory(ProxyManagerDeltaJson.abi,ProxyManagerDeltaJson.bytecode.object,ProxyManagerDeltaJson.fromAssemblyConstructors).deploy(wallet0,publicClient,[]);
-		const deployProxyDeltaTx = await proxyManagerDelta.getMethod("deployProxy").execute([ wallet1Addr,erc20Addr ]);
-		const assemblyProxyDeltaAddr = deployProxyDeltaTx.events.find(x => x.eventName==="NewProxy")!.args.contractAddress;
-
-		res += "\nDEPLOYING PROXY MANAGER EPSILON";
-		const proxyManagerEpsilon = await new ContractFactory(ProxyManagerEpsilonJson.abi,ProxyManagerEpsilonJson.bytecode.object,ProxyManagerEpsilonJson.fromAssemblyConstructors).deploy(wallet0,publicClient,[]);
-		const deployProxyEpsilonTx = await proxyManagerEpsilon.getMethod("deployProxy").execute([ wallet1Addr,erc20Addr ]);
-		const assemblyProxyEpsilonAddr =  deployProxyEpsilonTx.events.find(x => x.eventName==="NewProxy")!.args.contractAddress;
+		res += "\nDEPLOYING SECURE PROXY MANAGER";
+		const SecureProxyManager = await new ContractFactory(SecureProxyManagerJson.abi,SecureProxyManagerJson.bytecode.object,SecureProxyManagerJson.fromAssemblyConstructors).deploy(wallet0,publicClient,[]);
+		const deploySecureProxyTx = await SecureProxyManager.getMethod("deployProxy").execute([ wallet1Addr,erc20Addr ]);
+		const AssemblySecureProxyAddr =  deploySecureProxyTx.events.find(x => x.eventName==="NewProxy")!.args.contractAddress;
 
 		const basicProxy =  erc20Factory.connect(wallet0, publicClient, basic.getAddress());
-		const assemblyProxyAlpha = erc20Factory.connect(wallet0, publicClient, proxyRootAlpha.getAddress());
-		const assemblyProxyBeta = erc20Factory.connect(wallet0, publicClient, proxyRootBeta.getAddress());
-		const assemblyProxyDelta = erc20Factory.connect(wallet0, publicClient, assemblyProxyDeltaAddr);
-		const assemblyProxyEpsilon = erc20Factory.connect(wallet0, publicClient, assemblyProxyEpsilonAddr);
+		const SimpleProxy = erc20Factory.connect(wallet0, publicClient, proxyRootSimple.getAddress());
+		const AssemblySecureProxy = erc20Factory.connect(wallet0, publicClient, AssemblySecureProxyAddr);
 	
 		const erc20Contracts = [
 			{ label: "WITHOUT PROXY", contract: erc20 },
 			{ label: "ZEPELLING PROXY", contract: basicProxy },
-			{ label: "MY PROXY ALPHA", contract: assemblyProxyAlpha },
-			{ label: "MY PROXY BETA", contract: assemblyProxyBeta },
-			{ label: "MY PROXY DELTA", contract: assemblyProxyDelta },
-			{ label: "MY PROXY EPSILON", contract: assemblyProxyEpsilon },
+			{ label: "PROXY SIMPLE", contract: SimpleProxy },
+			{ label: "SECURE PROXY", contract: AssemblySecureProxy },
 		];
 
-		res += "\nMINT 20";
-		res += await printGasForErc20(erc20Contracts,"mint",[ wallet0Addr, 20n ]);
+		res += "\nMINT 10";
+		res += await printGasForErc20(erc20Contracts,"mint",[ wallet0Addr, 10n ]);
 
-		res += "\nMINT 20 AGAIN";
-		res += await printGasForErc20(erc20Contracts,"mint",[ wallet0Addr, 20n ]);
+		res += "\nMINT 10 AGAIN";
+		res += await printGasForErc20(erc20Contracts,"mint",[ wallet0Addr, 10n ]);
 
 		res += "\nTRANSFER PART:";
-		res += await printGasForErc20(erc20Contracts,"transfer",[ "0x0000000000000000000000000000000000000001", 15n ]);
+		res += await printGasForErc20(erc20Contracts,"transfer",[ "0x0000000000000000000000000000000000000001", 10n ]);
+
+		res += "\nTRANSFER PART AGAIN:";
+		res += await printGasForErc20(erc20Contracts,"transfer",[ "0x0000000000000000000000000000000000000001", 5n ]);
 
 		res += "\nTRANSFER TOTAL";
 		res += await printGasForErc20(erc20Contracts,"transfer",[ "0x0000000000000000000000000000000000000001", 5n ]);
 
-		res += "\nMINT 20";
-		res += await printGasForErc20(erc20Contracts,"mint",[ wallet0Addr, 20n ]);
-
-		res += "\nMINT 20 AGAIN";
-		res += await printGasForErc20(erc20Contracts,"mint",[ wallet0Addr, 20n ]);
-
-		res += "\nTRANSFER PART:";
-		res += await printGasForErc20(erc20Contracts,"transfer",[ "0x0000000000000000000000000000000000000001", 15n ]);
-
-		res += "\nTRANSFER TOTAL";
-		res += await printGasForErc20(erc20Contracts,"transfer",[ "0x0000000000000000000000000000000000000001", 5n ]);
-
-	
 		res += "\n\nADMIN FUNCTIONS";
 		const erc20_2 = await new ContractFactory(Erc20_2Json.abi,Erc20_2Json.bytecode.object).deploy(wallet0,publicClient,[]);
 		const erc20_2Addr = erc20_2.getAddress();
 
-		const proxyRootAlphaW1 = proxyRootAlpha.connect(wallet1);
-		const proxyRootBetaW1 = proxyRootBeta.connect(wallet1);
-		const proxyRootDeltaW1 = new ContractFactory(AssemblyProxyDeltaJson.abi,AssemblyProxyDeltaJson.bytecode.object).connect(wallet1,publicClient,assemblyProxyDeltaAddr);
-		const proxyManagerDeltaW1 = proxyManagerDelta.connect(wallet1);
-		const proxyManagerEpsilonW1 = proxyManagerEpsilon.connect(wallet1);
+		const proxyRootSimpleW1 = proxyRootSimple.connect(wallet1);
+		const SecureProxyManagerW1 = SecureProxyManager.connect(wallet1);
 
 		res += "\nUPGRADETO";
 		res += printGas(
-			"MY PROXY ALPHA",
-			await proxyRootAlphaW1.getMethod("upgradeTo").estimateGas([ erc20_2Addr ]),
-			(await proxyRootAlphaW1.getMethod("upgradeTo").execute([ erc20_2Addr ])).receipt
+			"PROXY SIMPLE",
+			await proxyRootSimpleW1.getMethod("adminFunctionsPut").estimateGas([ 0,erc20_2Addr ]),
+			(await proxyRootSimpleW1.getMethod("adminFunctionsPut").execute([ 0,erc20_2Addr ])).receipt
 		);
 		res += printGas(
-			"MY PROXY BETA",
-			await proxyRootBetaW1.getMethod("adminFunctionsPut").estimateGas([ 0,erc20_2Addr ]),
-			(await proxyRootBetaW1.getMethod("adminFunctionsPut").execute([ 0,erc20_2Addr ])).receipt
-		);
-		res += printGas(
-			"MY PROXY DELTA",
-			await proxyRootDeltaW1.getMethod("upgradeTo").estimateGas([ erc20_2Addr ]),
-			(await proxyRootDeltaW1.getMethod("upgradeTo").execute([ erc20_2Addr ])).receipt
-		);
-		res += printGas(
-			"MY PROXY EPSILON",
-			await proxyManagerEpsilonW1.getMethod("upgradeTo").estimateGas([ assemblyProxyEpsilonAddr,erc20_2Addr ]),
-			(await proxyManagerEpsilonW1.getMethod("upgradeTo").execute([ assemblyProxyEpsilonAddr,erc20_2Addr ])).receipt
+			"SECURE PROXY",
+			await SecureProxyManagerW1.getMethod("upgradeTo").estimateGas([ AssemblySecureProxyAddr,erc20_2Addr ]),
+			(await SecureProxyManagerW1.getMethod("upgradeTo").execute([ AssemblySecureProxyAddr,erc20_2Addr ])).receipt
 		);
 
 		res += "\nCHANGE ADMIN";
 		res += printGas(
-			"MY PROXY ALPHA",
-			await proxyRootAlphaW1.getMethod("changeAdmin").estimateGas([ wallet2Address ]),
-			(await proxyRootAlphaW1.getMethod("changeAdmin").execute([ wallet2Address ])).receipt
+			"PROXY SIMPLE",
+			await proxyRootSimpleW1.getMethod("adminFunctionsPut").estimateGas([ 1, wallet2Address ]),
+			(await proxyRootSimpleW1.getMethod("adminFunctionsPut").execute([ 1, wallet2Address ])).receipt
 		);
 		res += printGas(
-			"MY PROXY BETA",
-			await proxyRootBetaW1.getMethod("adminFunctionsPut").estimateGas([ 1, wallet2Address ]),
-			(await proxyRootBetaW1.getMethod("adminFunctionsPut").execute([ 1, wallet2Address ])).receipt
-		);
-		res += printGas(
-			"MY PROXY DELTA",
-			await proxyManagerDeltaW1.getMethod("changeAdmin").estimateGas([ proxyRootDeltaW1.getAddress(), wallet2Address ]),
-			(await proxyManagerDeltaW1.getMethod("changeAdmin").execute([ proxyRootDeltaW1.getAddress(),wallet2Address ])).receipt
-		);
-		res += printGas(
-			"MY PROXY EPSILON",
-			await proxyManagerEpsilonW1.getMethod("changeAdmin").estimateGas([ assemblyProxyEpsilonAddr, wallet2Address ]),
-			(await proxyManagerEpsilonW1.getMethod("changeAdmin").execute([ assemblyProxyEpsilonAddr, wallet2Address ])).receipt
+			"SECURE PROXY",
+			await SecureProxyManagerW1.getMethod("changeAdmin").estimateGas([ AssemblySecureProxyAddr, wallet2Address ]),
+			(await SecureProxyManagerW1.getMethod("changeAdmin").execute([ AssemblySecureProxyAddr, wallet2Address ])).receipt
 		);
 
-
-		const proxyRootAlphaW2 = proxyRootAlpha.connect(wallet2);
-		const proxyRootBetaW2 = proxyRootBeta.connect(wallet2);
-		const proxyRootDeltaW2 = proxyRootDeltaW1.connect(wallet2);
-		const proxyManagerEpsilonW2 = proxyManagerEpsilon.connect(wallet2);
+		const proxyRootSimpleW2 = proxyRootSimple.connect(wallet2);
+		const SecureProxyManagerW2 = SecureProxyManager.connect(wallet2);
 
 		res += "\nUPGRADETO";
 		res += printGas(
-			"MY PROXY ALPHA",
-			await proxyRootAlphaW2.getMethod("upgradeTo").estimateGas([ erc20Addr ]),
-			(await proxyRootAlphaW2.getMethod("upgradeTo").execute([ erc20Addr ])).receipt
+			"PROXY SIMPLE",
+			await proxyRootSimpleW2.getMethod("adminFunctionsPut").estimateGas([ 0,erc20Addr ]),
+			(await proxyRootSimpleW2.getMethod("adminFunctionsPut").execute([ 0,erc20Addr ])).receipt
 		);
 		res += printGas(
-			"MY PROXY BETA",
-			await proxyRootBetaW2.getMethod("adminFunctionsPut").estimateGas([ 0,erc20Addr ]),
-			(await proxyRootBetaW2.getMethod("adminFunctionsPut").execute([ 0,erc20Addr ])).receipt
-		);
-		res += printGas(
-			"MY PROXY DELTA",
-			await proxyRootDeltaW2.getMethod("upgradeTo").estimateGas([ erc20Addr ]),
-			(await proxyRootDeltaW2.getMethod("upgradeTo").execute([ erc20Addr ])).receipt
-		);
-		res += printGas(
-			"MY PROXY EPSILON",
-			await proxyManagerEpsilonW2.getMethod("upgradeTo").estimateGas([ assemblyProxyEpsilonAddr,erc20Addr ]),
-			(await proxyManagerEpsilonW2.getMethod("upgradeTo").execute([ assemblyProxyEpsilonAddr,erc20Addr ])).receipt
+			"SECURE PROXY",
+			await SecureProxyManagerW2.getMethod("upgradeTo").estimateGas([ AssemblySecureProxyAddr,erc20Addr ]),
+			(await SecureProxyManagerW2.getMethod("upgradeTo").execute([ AssemblySecureProxyAddr,erc20Addr ])).receipt
 		);
 
 		console.log(res);
